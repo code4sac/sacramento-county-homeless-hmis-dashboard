@@ -123,6 +123,23 @@ function buildPage(flow, outcomes, demo, yearlyData){
         // chart: {
         //     type: 'bar'
         // },
+        exporting: {
+            buttons: {
+                contextButton: {
+                    menuItems: [
+                        'printChart',
+                        // 'separator',
+                        'downloadPNG',
+                        'downloadJPEG',
+                        'downloadPDF',
+                        'downloadSVG',
+                        'downloadCSV',
+                        'downloadXLS'
+                    ]
+                }
+            }
+        },
+
         title: {
             text: 'Program enrollees with permanent housing upon program exit'
         },
@@ -224,6 +241,23 @@ function buildYearlyBar(yearlyData) {
         chart: {
             type: 'column'
         },
+        exporting: {
+            buttons: {
+                contextButton: {
+                    menuItems: [
+                        'printChart',
+                        // 'separator',
+                        'downloadPNG',
+                        'downloadJPEG',
+                        'downloadPDF',
+                        'downloadSVG',
+                        'downloadCSV',
+                        'downloadXLS'
+                    ]
+                }
+            }
+        },
+
         title: {
             text: 'Program Participation by Year'
         },
@@ -314,6 +348,23 @@ function buildYearlyBar(yearlyData) {
         chart: {
             type: 'column'
         },
+        exporting: {
+            buttons: {
+                contextButton: {
+                    menuItems: [
+                        'printChart',
+                        // 'separator',
+                        'downloadPNG',
+                        'downloadJPEG',
+                        'downloadPDF',
+                        'downloadSVG',
+                        'downloadCSV',
+                        'downloadXLS'
+                    ]
+                }
+            }
+        },
+
         title: {
             text: 'Distinct Count of Clients'
         },
@@ -501,6 +552,23 @@ function updateDemo(demo,year) {
             minColor: '#ffffff',
             maxColor: '#f28f43'
         },
+        exporting: {
+            buttons: {
+                contextButton: {
+                    menuItems: [
+                        'printChart',
+                        // 'separator',
+                        'downloadPNG',
+                        'downloadJPEG',
+                        'downloadPDF',
+                        'downloadSVG',
+                        'downloadCSV',
+                        'downloadXLS'
+                    ]
+                }
+            }
+        },
+
         credits: {
             enabled: false
         },
@@ -536,6 +604,23 @@ function updateDemo(demo,year) {
         title: {
             text: `${year} Gender`
         },
+        exporting: {
+            buttons: {
+                contextButton: {
+                    menuItems: [
+                        'printChart',
+                        // 'separator',
+                        'downloadPNG',
+                        'downloadJPEG',
+                        'downloadPDF',
+                        'downloadSVG',
+                        'downloadCSV',
+                        'downloadXLS'
+                    ]
+                }
+            }
+        },
+
         subtitle: {
             text: ''
         },
@@ -603,7 +688,23 @@ function updateDemo(demo,year) {
         title: {
             text: `${year} Age Distribution`
         },
-    
+        exporting: {
+            buttons: {
+                contextButton: {
+                    menuItems: [
+                        'printChart',
+                        // 'separator',
+                        'downloadPNG',
+                        'downloadJPEG',
+                        'downloadPDF',
+                        'downloadSVG',
+                        'downloadCSV',
+                        'downloadXLS'
+                    ]
+                }
+            }
+        },
+
         legend: {
             enabled: false
         },

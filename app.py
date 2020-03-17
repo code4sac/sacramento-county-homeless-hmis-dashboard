@@ -12,11 +12,9 @@ load_dotenv()
 
 app = Flask(__name__)
 
-
 url = os.environ['DATABASE_URL']
 
 conn = psycopg2.connect(url, sslmode='require')
-
 
 
 @app.route('/')

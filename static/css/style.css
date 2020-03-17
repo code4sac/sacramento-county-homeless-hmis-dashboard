@@ -59,7 +59,16 @@
 
 .card {
   background-color: lightgrey;
-  margin: 10px;
+  margin: 0px;
+}
+
+#pit-count {
+  margin: 8px;
+}
+
+#pit-text {
+  margin-right: 50px;
+  margin-left: 50px;
 }
 
   .footer {
@@ -95,6 +104,10 @@
   padding-top: 10px;
 }
 
+.col-md-2 {
+  padding: 0px;
+}
+
 #flow-card-center {
         /* display: flex; */
         text-align: center;
@@ -124,9 +137,14 @@ padding: 0px;
 }
 
 .section-title {
-    padding-left: 2%;
-
-}
+    padding-left: 2%; 
+      /* overflow: hidden;  */
+      white-space: nowrap; 
+      /* text-overflow: ellipsis; 
+      word-break: break-all; 
+      word-wrap: break-word;  */
+      display:inline-block;
+  }
 
 .container-fluid {
     margin-top: 10px;
