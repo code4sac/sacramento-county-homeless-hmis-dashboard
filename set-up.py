@@ -1,15 +1,21 @@
 import subprocess
 import sys
 
-def install(package):
+
+
+def install_package(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
-file = 'requirements.txt'
+def install_req(path):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", path])
 
-with open(file,'r') as f:
-    lines = f.readlines()
-    for line in lines:
-        install(line)
+
+#MacOS install might need setuptools installed first, hence the install package then install requirements.txt
+
+#FOLLOWING LINES WILL INSTALL ALL THE REQUIRED PACKAGES ONTO YOUR LOCAL MACHINE
+# YOU WILL NEED TO MANUALLY INSTALL POSTGRESQL LOCALLY TO HAVE THIS CODE RUN
+install_package('setuptools')
+install_req('requirements.txt')
 
 
 from sqlalchemy import create_engine
@@ -19,7 +25,14 @@ import pandas as pd
 import numpy as np
 
 
-load_dotenv(r'HMIS/local.env')
+###### FOLLOWING LINE WILL ONLY WORK ONCE YOU"VE CREATED A LOCAL .ENV FILE LIKE THE EXAMPLE IN GITHUB REPO
+###### SETS UP THIS PROJECT TO HAVE THE CONNECTION STRING FOR YOUR LOCAL POSTGRESQL DATABASE
+####################################
+load_dotenv()
+###############################
+
+
+
 database_url = os.environ['DATABASE_URL']
 
 engine = create_engine(database_url)
