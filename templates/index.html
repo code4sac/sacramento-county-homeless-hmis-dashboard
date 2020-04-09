@@ -22,14 +22,14 @@
         Homelessness poses a major challenge to Sacramento, California. In an effort to better understand the issue, 
         this dashboard was developed to help the community visualize the volume of homeless-related services, 
         how many people find permanent housing through these programs, and the demographics of those who use the services.
-        The data comes from Sacramento's <strong style="color:lightskyblue"> Homeless Management Information System (HMIS)</strong>, 
+        The data comes from Sacramento's <strong style="color: #a6c96a"> Homeless Management Information System (HMIS)</strong>, 
         which is used by local homeless service providers within Sacramento County to coordinate care, 
         manage their operations, and better serve those in need of homeless services (clients). 
         As of early 2020, the most recent public data is through August 2019.
         The raw data can be accessed at 
           <a href="https://github.com/code4sac/sacramento-county-homeless-hmis-data/tree/master/data">Code for Sacramento</a>.
           <br><br>
-          HMIS data provides additional perspective to the more widely reported <strong style="color:lightskyblue">Point in Time (PIT) Count</strong>.
+          HMIS data provides additional perspective to the more widely reported <strong style="color:#a6c96a">Point in Time (PIT) Count</strong>.
            The 2019 Sacramento Homeless PIT Count indicated that 5,570 persons experience homelessness on a given night, 
            an increase of 19% countywide compared to 2017. A count is held every two years and was last conducted over two nights in January
             2019 <a href="https://sacramentostepsforward.org/2019pitcount/">(Source)</a>. In contrast, HMIS provides more granular data over time and specific to those who receive services. 
@@ -84,17 +84,6 @@
             <h5 class="section-title"><strong>PARTICIPANT OUTCOMES</strong></h5>
           </div>
           <br>
-          <div class = "row" id="dropdown"> 
-            <div class="col-md-1" style="text-align: right">
-              <h6>Select year</h6>
-            </div>
-              <div class="col-md-2">
-
-            <select id="selDataset" onchange="optionChanged(this.value)">
-                <option id="selected" selected="2018">Year</option>
-              </select>
-            </div>
-            </div> 
 
           <div class="row" id='ph'>
             <div class="col-md-8" id="years-bar">
@@ -125,14 +114,15 @@
             <h5 class="section-title"><strong>PARTICIPANT DEMOGRAPHICS</strong></h5>
           </div>
           <br>
-          <!-- <div class = "col-md-2" id="dropdown"> 
+
+          <div class = "col-md-2" id="dropdown"> 
             <div class="well">
               <h6>Select year</h6>
             <select id="selDataset" onchange="optionChanged(this.value)">
                 <option id="selected" selected="2018">Year</option>
               </select>
             </div>
-            </div>  -->
+            </div> 
 
             <div class="row" id='demo'>
               <div class="col-md-4" id="race"></div>

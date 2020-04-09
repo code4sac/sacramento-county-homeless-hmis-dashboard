@@ -262,25 +262,10 @@ function buildYearlyBar(yearlyData) {
             text: 'Program Participation by Year'
         },
         subtitle: {
-            text: 'This chart shows total program enrollment.\
-              Clients are included more than once if participating in more than one program.\
-               Data for 2019 only available through August.'
+            text: 'This chart shows the total homeless services program enrollments each year, and of those, the number of new enrollments during the year and the number of enrollments that ended that year. Clients are included more than once if participating in more than one program.'
         },
-        // annotations: [{
-        //     labels: [{
-        //         point: {
-        //             // xAxis: 0,
-        //             // yAxis: 0,
-        //             // x:300,
-        //             // y:50,
+        colors: ["#434348", "#7cb5ec", "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
 
-        //         },
-        //         text: 'Projected'
-            // }],
-        //     labelOptions: {
-        //         x: 10, y: -10
-        //     }
-        // }],
         xAxis: {
             categories: [
                 
@@ -316,22 +301,38 @@ function buildYearlyBar(yearlyData) {
             }
         },
         series: [{
-            name: 'New',
+            name: 'Total enrollments',
             data: []
-    
         }, {
-            name: 'Continuing',
+            name: 'New enrollments',
             data: []
-    
         }, {
-            name: 'Ended',
+            name: 'Enrollments ended',
             data: []
-    
-        }]
-    };
+        }],
+        annotations: [{
+            labels: [{
+                point: {
+                    x: 4,
+                    y: 18800,
+                    xAxis: 0,
+                    yAxis: 0,
+
+            },
+            style: {
+                fontSize: '9px'            
+            },
+                text: 'Data through <br> August 2019'
+            }],
+            labelOptions: {
+                backgroundColor: 'rgba(255,255,255, 0.3)',
+                borderWidth: 0,
+            }}]
+        };
+
     years.forEach((year,index) => {
-        chartOptions.series[0].data.push(yearlyData.in[index]);
-        chartOptions.series[1].data.push(yearlyData.active[index]);
+        chartOptions.series[1].data.push(yearlyData.in[index]);
+        chartOptions.series[0].data.push(yearlyData.active[index]);
         chartOptions.series[2].data.push(yearlyData.out[index]);
         chartOptions.xAxis.categories.push(year);
     });
@@ -370,9 +371,7 @@ function buildYearlyBar(yearlyData) {
             text: 'Distinct Count of Clients'
         },
         subtitle: {
-            text: 'This chart shows the number of new homeless services clients, contiuning participants, and clients that ended services.\
-            Each client in counted only once.\
-            Data for 2019 is through August.'
+            text: 'This chart shows the total number of people who received homeless services by year, and of those, the number who started receiving services that year and the number who ended services that year. Each client is counted only once.'
         },
         // annotations: [{
         //     labels: [{
@@ -424,22 +423,42 @@ function buildYearlyBar(yearlyData) {
             }
         },
         series: [{
-            name: 'New',
+            name: 'Total clients',
             data: []
     
         }, {
-            name: 'Continuing',
+            name: 'New clients',
             data: []
     
         }, {
-            name: 'Ended',
+            name: 'Clients who ended services',
             data: []
     
-        }]
+        }],
+        colors: ["#434348","#7cb5ec",  "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
+        annotations: [{
+            labels: [{
+                point: {
+                    x: 4,
+                    y: 11550,
+                    xAxis: 0,
+                    yAxis: 0,
+            
+            },
+            style: {
+                // color: 'rgba(210, 215, 211, 1)',
+                fontSize: '9px'
+            },
+                text: 'Data through <br> August 2019'
+            }],
+            labelOptions: {
+                backgroundColor: 'rgba(255,255,255, 0.3)',
+                borderWidth: 0,
+            }}]
     };
     years.forEach((year,index) => {
-        chartOptions.series[0].data.push(yearlyData.distinct_in[index]);
-        chartOptions.series[1].data.push(yearlyData.distinct_active[index]);
+        chartOptions.series[1].data.push(yearlyData.distinct_in[index]);
+        chartOptions.series[0].data.push(yearlyData.distinct_active[index]);
         chartOptions.series[2].data.push(yearlyData.distinct_out[index]);
         chartOptions.xAxis.categories.push(year);
     });
@@ -663,7 +682,7 @@ function updateDemo(demo,year) {
         xAxis: {
             categories: [
         ],
-            crosshair: true
+            crosshair: true,
         },
         credits: {
             enabled: true
@@ -692,7 +711,8 @@ function updateDemo(demo,year) {
         },
         series: [{
             name: 'Number of Program Enrollees',
-            data: []
+            data: [],
+            color: "#f7a35c"
     
         }]
     };
