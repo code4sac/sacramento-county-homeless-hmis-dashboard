@@ -262,9 +262,8 @@ function buildYearlyBar(yearlyData) {
             text: 'Program Participation by Year'
         },
         subtitle: {
-            text: 'For each year, the number of new enrollments in homeless service\
-             programs, ongoing enrollment, and enrollments that ended are shown. Each enrollment is counted,\
-              so clients are included more than once if participating in more than one program.\
+            text: 'This chart shows total program enrollment.\
+              Clients are included more than once if participating in more than one program.\
                Data for 2019 only available through August.'
         },
         // annotations: [{
@@ -290,6 +289,8 @@ function buildYearlyBar(yearlyData) {
         },
         yAxis: {
             min: 0,
+            max: 21000,
+            endOnTick: false,
             title: {
                 text: '',
                 // rotation: 0,
@@ -315,11 +316,11 @@ function buildYearlyBar(yearlyData) {
             }
         },
         series: [{
-            name: 'Started',
+            name: 'New',
             data: []
     
         }, {
-            name: 'Ongoing',
+            name: 'Continuing',
             data: []
     
         }, {
@@ -369,9 +370,8 @@ function buildYearlyBar(yearlyData) {
             text: 'Distinct Count of Clients'
         },
         subtitle: {
-            text: 'For each year, the number of new enrollments in homeless service\
-            programs, ongoing enrollment, and enrollments that ended are shown.\
-            This chart shows the distinct number of clients for that year.\
+            text: 'This chart shows the number of new homeless services clients, contiuning participants, and clients that ended services.\
+            Each client in counted only once.\
             Data for 2019 is through August.'
         },
         // annotations: [{
@@ -397,6 +397,8 @@ function buildYearlyBar(yearlyData) {
         },
         yAxis: {
             min: 0,
+            max: 21000,
+            endOnTick: false,
             title: {
                 text: '',
                 // rotation: 0,
@@ -422,11 +424,11 @@ function buildYearlyBar(yearlyData) {
             }
         },
         series: [{
-            name: 'Started',
+            name: 'New',
             data: []
     
         }, {
-            name: 'Ongoing',
+            name: 'Continuing',
             data: []
     
         }, {
@@ -548,9 +550,23 @@ function updateOutcomes(outcomes, year) {
 function updateDemo(demo,year) {
 //Race tree map
     var racechartOptions = {
-        colorAxis: {
-            minColor: '#ffffff',
-            maxColor: '#f28f43'
+        // colorAxis: {
+        //     minColor: '#ffffff',
+        //     maxColor: '#f28f43'
+        // },
+        tooltip: { 
+            enabled: false 
+        },
+        chart: {
+            type: 'bar'
+        },
+        plotOptions: {
+            bar: {
+                dataLabels: {
+                    enabled: true
+                },
+                showInLegend: false
+            }
         },
         exporting: {
             buttons: {
@@ -568,13 +584,29 @@ function updateDemo(demo,year) {
                 }
             }
         },
-
-        credits: {
-            enabled: false
+        subtitle: {
+            text: ''
         },
+        xAxis: {
+            categories: [
+        ],
+            crosshair: true
+        },
+        credits: {
+            enabled: true
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: ''
+            }
+        },
+        // credits: {
+        //     enabled: false
+        // },
         series: [{
-            type: 'treemap',
-            layoutAlgorithm: 'sliceAndDice',
+            // type: 'treemap',
+            // layoutAlgorithm: 'sliceAndDice',
             data: []
         }],
         title: {
@@ -583,13 +615,17 @@ function updateDemo(demo,year) {
     };
 
     var race = demo.race[0];
-    race.forEach(item => {
-        racechartOptions.series[0].data.push(
-            {name: item[0],
-            value: item[1],
-            colorValue: item[1]}
-        )
+    race.reverse().forEach(item => {
+        racechartOptions.series[0].data.push(item[1]);
+        racechartOptions.xAxis.categories.push(item[0])
+        //     {name: item[0],
+        //     value: item[1],
+        //     colorValue: item[1]}
+        // )
     });
+
+
+    
     Highcharts.chart('race', racechartOptions);
     
 // Gender hbar chart
@@ -630,7 +666,7 @@ function updateDemo(demo,year) {
             crosshair: true
         },
         credits: {
-            enabled: false
+            enabled: true
         },
         yAxis: {
             min: 0,
@@ -682,11 +718,11 @@ function updateDemo(demo,year) {
             type: 'boxplot'
         },
         credits: {
-            enabled: false
+            enabled: true
         },
     
         title: {
-            text: `${year} Age Distribution`
+            text: `${year} Age`
         },
         exporting: {
             buttons: {
