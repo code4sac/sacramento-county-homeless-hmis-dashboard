@@ -262,26 +262,10 @@ function buildYearlyBar(yearlyData) {
             text: 'Program Participation by Year'
         },
         subtitle: {
-            text: 'For each year, the number of new enrollments in homeless service\
-             programs, ongoing enrollment, and enrollments that ended are shown. Each enrollment is counted,\
-              so clients are included more than once if participating in more than one program.\
-               Data for 2019 only available through August.'
+            text: 'This chart shows the total homeless services program enrollments each year, and of those, the number of new enrollments during the year and the number of enrollments that ended that year. Clients are included more than once if participating in more than one program.'
         },
-        // annotations: [{
-        //     labels: [{
-        //         point: {
-        //             // xAxis: 0,
-        //             // yAxis: 0,
-        //             // x:300,
-        //             // y:50,
+        colors: ["#434348", "#7cb5ec", "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
 
-        //         },
-        //         text: 'Projected'
-            // }],
-        //     labelOptions: {
-        //         x: 10, y: -10
-        //     }
-        // }],
         xAxis: {
             categories: [
                 
@@ -290,6 +274,8 @@ function buildYearlyBar(yearlyData) {
         },
         yAxis: {
             min: 0,
+            max: 21000,
+            endOnTick: false,
             title: {
                 text: '',
                 // rotation: 0,
@@ -315,22 +301,38 @@ function buildYearlyBar(yearlyData) {
             }
         },
         series: [{
-            name: 'Started',
+            name: 'Total enrollments',
             data: []
-    
         }, {
-            name: 'Ongoing',
+            name: 'New enrollments',
             data: []
-    
         }, {
-            name: 'Ended',
+            name: 'Enrollments ended',
             data: []
-    
-        }]
-    };
+        }],
+        annotations: [{
+            labels: [{
+                point: {
+                    x: 4,
+                    y: 18800,
+                    xAxis: 0,
+                    yAxis: 0,
+
+            },
+            style: {
+                fontSize: '9px'            
+            },
+                text: 'Data through <br> August 2019'
+            }],
+            labelOptions: {
+                backgroundColor: 'rgba(255,255,255, 0.3)',
+                borderWidth: 0,
+            }}]
+        };
+
     years.forEach((year,index) => {
-        chartOptions.series[0].data.push(yearlyData.in[index]);
-        chartOptions.series[1].data.push(yearlyData.active[index]);
+        chartOptions.series[1].data.push(yearlyData.in[index]);
+        chartOptions.series[0].data.push(yearlyData.active[index]);
         chartOptions.series[2].data.push(yearlyData.out[index]);
         chartOptions.xAxis.categories.push(year);
     });
@@ -369,10 +371,7 @@ function buildYearlyBar(yearlyData) {
             text: 'Distinct Count of Clients'
         },
         subtitle: {
-            text: 'For each year, the number of new enrollments in homeless service\
-            programs, ongoing enrollment, and enrollments that ended are shown.\
-            This chart shows the distinct number of clients for that year.\
-            Data for 2019 is through August.'
+            text: 'This chart shows the total number of people who received homeless services by year, and of those, the number who started receiving services that year and the number who ended services that year. Each client is counted only once.'
         },
         // annotations: [{
         //     labels: [{
@@ -397,6 +396,8 @@ function buildYearlyBar(yearlyData) {
         },
         yAxis: {
             min: 0,
+            max: 21000,
+            endOnTick: false,
             title: {
                 text: '',
                 // rotation: 0,
@@ -422,22 +423,42 @@ function buildYearlyBar(yearlyData) {
             }
         },
         series: [{
-            name: 'Started',
+            name: 'Total clients',
             data: []
     
         }, {
-            name: 'Ongoing',
+            name: 'New clients',
             data: []
     
         }, {
-            name: 'Ended',
+            name: 'Clients who ended services',
             data: []
     
-        }]
+        }],
+        colors: ["#434348","#7cb5ec",  "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
+        annotations: [{
+            labels: [{
+                point: {
+                    x: 4,
+                    y: 11550,
+                    xAxis: 0,
+                    yAxis: 0,
+            
+            },
+            style: {
+                // color: 'rgba(210, 215, 211, 1)',
+                fontSize: '9px'
+            },
+                text: 'Data through <br> August 2019'
+            }],
+            labelOptions: {
+                backgroundColor: 'rgba(255,255,255, 0.3)',
+                borderWidth: 0,
+            }}]
     };
     years.forEach((year,index) => {
-        chartOptions.series[0].data.push(yearlyData.distinct_in[index]);
-        chartOptions.series[1].data.push(yearlyData.distinct_active[index]);
+        chartOptions.series[1].data.push(yearlyData.distinct_in[index]);
+        chartOptions.series[0].data.push(yearlyData.distinct_active[index]);
         chartOptions.series[2].data.push(yearlyData.distinct_out[index]);
         chartOptions.xAxis.categories.push(year);
     });
@@ -548,9 +569,23 @@ function updateOutcomes(outcomes, year) {
 function updateDemo(demo,year) {
 //Race tree map
     var racechartOptions = {
-        colorAxis: {
-            minColor: '#ffffff',
-            maxColor: '#f28f43'
+        // colorAxis: {
+        //     minColor: '#ffffff',
+        //     maxColor: '#f28f43'
+        // },
+        tooltip: { 
+            enabled: false 
+        },
+        chart: {
+            type: 'bar'
+        },
+        plotOptions: {
+            bar: {
+                dataLabels: {
+                    enabled: true
+                },
+                showInLegend: false
+            }
         },
         exporting: {
             buttons: {
@@ -568,13 +603,29 @@ function updateDemo(demo,year) {
                 }
             }
         },
-
-        credits: {
-            enabled: false
+        subtitle: {
+            text: ''
         },
+        xAxis: {
+            categories: [
+        ],
+            crosshair: true
+        },
+        credits: {
+            enabled: true
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: ''
+            }
+        },
+        // credits: {
+        //     enabled: false
+        // },
         series: [{
-            type: 'treemap',
-            layoutAlgorithm: 'sliceAndDice',
+            // type: 'treemap',
+            // layoutAlgorithm: 'sliceAndDice',
             data: []
         }],
         title: {
@@ -583,13 +634,17 @@ function updateDemo(demo,year) {
     };
 
     var race = demo.race[0];
-    race.forEach(item => {
-        racechartOptions.series[0].data.push(
-            {name: item[0],
-            value: item[1],
-            colorValue: item[1]}
-        )
+    race.reverse().forEach(item => {
+        racechartOptions.series[0].data.push(item[1]);
+        racechartOptions.xAxis.categories.push(item[0])
+        //     {name: item[0],
+        //     value: item[1],
+        //     colorValue: item[1]}
+        // )
     });
+
+
+    
     Highcharts.chart('race', racechartOptions);
     
 // Gender hbar chart
@@ -627,10 +682,10 @@ function updateDemo(demo,year) {
         xAxis: {
             categories: [
         ],
-            crosshair: true
+            crosshair: true,
         },
         credits: {
-            enabled: false
+            enabled: true
         },
         yAxis: {
             min: 0,
@@ -656,7 +711,8 @@ function updateDemo(demo,year) {
         },
         series: [{
             name: 'Number of Program Enrollees',
-            data: []
+            data: [],
+            color: "#f7a35c"
     
         }]
     };
@@ -682,11 +738,11 @@ function updateDemo(demo,year) {
             type: 'boxplot'
         },
         credits: {
-            enabled: false
+            enabled: true
         },
     
         title: {
-            text: `${year} Age Distribution`
+            text: `${year} Age`
         },
         exporting: {
             buttons: {

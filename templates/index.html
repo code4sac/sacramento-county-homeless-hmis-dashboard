@@ -19,43 +19,46 @@
       <div class = "col-md-12" id="intro"><p style = "
         margin-left: 50px;
         margin-right: 50px; text-align: left;">
-        Homelessness poses a major challenge to Sacramento. In an effort to better understand the issue, Code for Sacramento developed
-        the following data visualizations of the volume of homeless-related services, how many people find permanent housing 
-        through these programs, and the demographics of those who use the services. The bulk of the data comes from Sacramento's 
-        Homeless Management Information System (HMIS), which is used by local homeless service providers to coordinate care, 
-        manage their operations, and better serve their clients. As of early 2020, the most recent data is available through Augst 2019. The raw data can be accessed at  <a href="https://github.com/code4sac/sacramento-county-homeless-hmis-data/tree/master/data">Code for Sacramento</a>.
+        Homelessness poses a major challenge to Sacramento, California. In an effort to better understand the issue, 
+        this dashboard was developed to help the community visualize the volume of homeless-related services, 
+        how many people find permanent housing through these programs, and the demographics of those who use the services.
+        The data comes from Sacramento's <strong style="color: #a6c96a"> Homeless Management Information System (HMIS)</strong>, 
+        which is used by local homeless service providers within Sacramento County to coordinate care, 
+        manage their operations, and better serve those in need of homeless services (clients). 
+        As of early 2020, the most recent public data is through August 2019.
+        The raw data can be accessed at 
+          <a href="https://github.com/code4sac/sacramento-county-homeless-hmis-data/tree/master/data">Code for Sacramento</a>.
+          <br><br>
+          HMIS data provides additional perspective to the more widely reported <strong style="color:#a6c96a">Point in Time (PIT) Count</strong>.
+           The 2019 Sacramento Homeless PIT Count indicated that 5,570 persons experience homelessness on a given night, 
+           an increase of 19% countywide compared to 2017. A count is held every two years and was last conducted over two nights in January
+            2019 <a href="https://sacramentostepsforward.org/2019pitcount/">(Source)</a>. In contrast, HMIS provides more granular data over time and specific to those who receive services. 
+            Note that not all who are homeless are represented in the HMIS data below, as not all seek or receive services, 
+            and some services are designed to prevent homelessness.
       </p>
         </div> 
       </div>
     </div>
-
+<br>
       <div class="container-fluid">
 
         <div class ="container-fluid">
           <div class="row" id ="section-row">
             <h5 class="section-title"><strong>PROGRAM VOLUME</strong></h5>
           </div>
-          <div>
-            <br>
-          <div class="row" id='pit-text'>
-            <p>The <strong>2019 Sacramento Homeless Point in Time (PIT) Count </strong> indicated that 5,570 persons experience 
-              homelessness on a given night, an increase of 19% countywide compared to 2017. A count is held every two years and 
-              was last conducted over two nights in January 2019 <a href="https://sacramentostepsforward.org/2019pitcount/">(Source).</a>
-               Note that not all who are homeless seek or receive services, and some services included below are designed to prevent homelessness. </p>
-          </div>
-        </div>
+
           <br>
           <div class="row" id='flow'>
-              <div class="col-md-5"><div id="yearly-bar-distinct" style="margin: 0rem; padding: 0rem;"></div></div>
+              <div class="col-md-6"><div id="yearly-bar-distinct" style="margin: 0rem; padding: 0rem;"></div></div>
               
-              <div class="col-md-2" id="flow-card"> 
+               <!-- <div class="col-md-2" id="flow-card"> 
                 <br>
-                <div class="card">
+                <div class="card"> -->
                     <!-- <div class="number-highlight" id="flow-row-card-header"> -->
-                    <div class="number-highlight" id="pit-header">
+                    <!-- <div class="number-highlight" id="pit-header"> -->
                       <!-- Featured -->
                       <!-- Point in Time Counts -->
-                    </div>
+                    <!-- </div> -->
                   
                     <!-- <ul class="list-group list-group-flush" id="flow-card-list"> -->
                     <!-- <ul class="list-group list-group-flush" id="pit-count">
@@ -63,15 +66,16 @@
                       given night, an increase of 19% countywide compared to 2017. A count is held everyt two years and was last conducted over two 
                       nights in January 2019.  
                     </ul> -->
-                    <img alt="Photo of homeless person on park bench by Frans Van Heerden" 
+                    <!-- <img alt="Photo of homeless person on park bench by Frans Van Heerden" 
                     title="Photo of homeless person on park bench by Frans Van Heerden" 
                     src="https://images.pexels.com/photos/631304/pexels-photo-631304.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" 
-                    style="width: 100%" >
+                    style="width: 100%" > -->
                     <!-- per website, image is free for reuse and not attribution required -->
-                  </div>
-                  <br>
-              </div>
-            <div class="col-md-5" ><div id="yearly-bar" style="margin: 0rem; padding: 0rem;"></div></div>
+                  <!-- </div> -->
+                  <!-- <br> -->
+              <!-- </div> -->
+
+            <div class="col-md-6" ><div id="yearly-bar" style="margin: 0rem; padding: 0rem;"></div></div>
           </div>
         </div>
  
@@ -80,17 +84,6 @@
             <h5 class="section-title"><strong>PARTICIPANT OUTCOMES</strong></h5>
           </div>
           <br>
-          <div class = "row" id="dropdown"> 
-            <div class="col-md-1" style="text-align: right">
-              <h6>Select year</h6>
-            </div>
-              <div class="col-md-2">
-
-            <select id="selDataset" onchange="optionChanged(this.value)">
-                <option id="selected" selected="2018">Year</option>
-              </select>
-            </div>
-            </div> 
 
           <div class="row" id='ph'>
             <div class="col-md-8" id="years-bar">
@@ -121,19 +114,20 @@
             <h5 class="section-title"><strong>PARTICIPANT DEMOGRAPHICS</strong></h5>
           </div>
           <br>
-          <!-- <div class = "col-md-2" id="dropdown"> 
+
+          <div class = "col-md-2" id="dropdown"> 
             <div class="well">
               <h6>Select year</h6>
             <select id="selDataset" onchange="optionChanged(this.value)">
                 <option id="selected" selected="2018">Year</option>
               </select>
             </div>
-            </div>  -->
+            </div> 
 
             <div class="row" id='demo'>
-              <div class="col-md-4" id="race"></div><div class="col-md-4" id="gender"></div><div class="col-md-4" id="age"></div>
-              
-
+              <div class="col-md-4" id="race"></div>
+              <div class="col-md-4" id="gender"></div>
+              <div class="col-md-4" id="age"></div>
             </div>
         <br>
           </div>
