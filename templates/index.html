@@ -46,8 +46,16 @@
           <div class="row" id ="section-row">
             <h5 class="section-title"><strong>PROGRAM VOLUME</strong></h5>
           </div>
-
+          <div class = "col-md-2" id="dropdown-programs"> 
+            <div class="well">
+              <h6>Select Program Type</h6>
+            <select id="selDatasetVolume" onchange="optionChangedVolume(this.value)">
+                <option id="selected">All</option>
+              </select>
+            </div>
+            </div> 
           <br>
+
           <div class="row" id='flow'>
               <div class="col-md-6"><div id="yearly-bar-distinct" style="margin: 0rem; padding: 0rem;"></div></div>
               
@@ -91,19 +99,31 @@
             </div>
       <br>
             <div class="col-md-4" id="percent-ph">
-              <div class="card" id="middle-card">
-                <div class="card-header" id="outcome-row-card-header-percent">
+              <table class="table">
+                <thead class="thead-dark">
+                  <tr>
+                    <th scope="col">Year</th>
+                    <th scope="col">Average Time To Permananet Housing</th>
+                    <th scope="col">Average % to Permananet Housing</th>
+                  </tr>
+                </thead>
+                <tbody id="append-me">
+                </tbody>
+              </table>
+              
+              <!-- <div class="card" id="middle-card">
+                <div class="card-header" id="outcome-row-card-header-percent">BOo
                 </div>
                 <div class="number-highlight" id="percent-ph-text">
                 </div>
               </div>
           <br>
               <div class="card" id="middle-card">
-                <div class="card-header" id="outcome-row-card-header-avg">
+                <div class="card-header" id="outcome-row-card-header-avg">ya
                 </div>
                 <div class="number-highlight" id="avg-ph-text">
                 </div>
-              </div>
+              </div> -->
               
             </div>
           </div>
@@ -114,7 +134,7 @@
             <h5 class="section-title"><strong>PARTICIPANT DEMOGRAPHICS</strong></h5>
           </div>
           <br>
-
+            <div class="row">
           <div class = "col-md-2" id="dropdown"> 
             <div class="well">
               <h6>Select year</h6>
@@ -123,7 +143,16 @@
               </select>
             </div>
             </div> 
-
+            <div class = "col-md-2" id="dropdown-programs"> 
+              <div class="well">
+                <h6>Select Program Type</h6>
+              <select id="selDatasetDemo" onchange="optionChangedDemo(this.value)">
+                  <option id="selected">All</option>
+                </select>
+              </div>
+              </div>
+            </div>
+<br>
             <div class="row" id='demo'>
               <div class="col-md-4" id="race"></div>
               <div class="col-md-4" id="gender"></div>
@@ -142,8 +171,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.5.0/d3.min.js"></script>
     <script type="text/javascript" src="{{ url_for('static',filename='js/app.js') }}"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/heatmap.js"></script>
-    <script src="https://code.highcharts.com/modules/treemap.js"></script>
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>

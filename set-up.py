@@ -1,21 +1,18 @@
+
 import subprocess
 import sys
 
 
+### FOLLOWING STUFF NEEDS TO BE UNCOMMENTED FOR OPEN SOURCE COLAB
 
-def install_package(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+# def install_package(package):
+#     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
-def install_req(path):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", path])
+# def install_req(path):
+#     subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", path])
 
-
-#MacOS install might need setuptools installed first, hence the install package then install requirements.txt
-
-#FOLLOWING LINES WILL INSTALL ALL THE REQUIRED PACKAGES ONTO YOUR LOCAL MACHINE
-# YOU WILL NEED TO MANUALLY INSTALL POSTGRESQL LOCALLY TO HAVE THIS CODE RUN
-install_package('setuptools')
-install_req('requirements.txt')
+# install_package('setuptools')
+# install_req('requirements.txt')
 
 
 from sqlalchemy import create_engine
@@ -25,15 +22,12 @@ import pandas as pd
 import numpy as np
 
 
-###### FOLLOWING LINE WILL ONLY WORK ONCE YOU"VE CREATED A LOCAL .ENV FILE LIKE THE EXAMPLE IN GITHUB REPO
-###### SETS UP THIS PROJECT TO HAVE THE CONNECTION STRING FOR YOUR LOCAL POSTGRESQL DATABASE
-####################################
-load_dotenv()
-###############################
+### FOLLOWING LINE NEEDS TO BE CHANGED ONCE READY TO TURN LIVE SITE ON 
+#load_dotenv() is what it will be
 
+load_dotenv(r'HMIS/local.env')
 
-
-database_url = os.environ['DATABASE_URL']
+database_url = os.environ['DATABASE_URL_TESTING']
 
 engine = create_engine(database_url)
 
@@ -250,10 +244,37 @@ exit.to_sql(name="exit_screen",if_exists="append", index=False, con=con, method=
 destination.to_sql(name="destinations", if_exists='append', index=False, con=con, method='multi')
 
 
+
+
+
 with engine.connect() as c:
     sql = '''
     ALTER TABLE Exit_Screen
 ADD COLUMN ES_Id bigserial PRIMARY KEY;
+
+alter table Programs
+add column "Project_Type_Group" varchar;
+update programs
+set "Project_Type_Group" = 'Permanent Housing'
+where "Project_Type" in ('PH - Housing with Services (no disability required)',
+						'PH - Housing Only',
+						'PH - Permanent Supportive Housing (disability required)');
+update programs
+set "Project_Type_Group" = 'Rapid Re-Housing'
+where "Project_Type" = 'PH - Rapid Re-Housing';
+update programs
+set "Project_Type_Group" = 'Emergency Shelter' where "Project_Type" = 'Emergency Shelter';
+update programs
+set "Project_Type_Group" = 'Street Outreach' where "Project_Type" = 'Street Outreach';
+update programs
+set "Project_Type_Group" = 'Transitional Housing' where "Project_Type" = 'Transitional Housing';
+update programs
+set "Project_Type_Group" = 'Other' where "Project_Type" in ('Day Shelter',
+														  'Coordinated Assessment',
+														  'Homeless Prevention',
+														  'Other',
+														  'Services Only',
+														  'RETIRED (HPRP)');
     '''
     c.execute(sql)
 
@@ -263,154 +284,247 @@ ADD COLUMN ES_Id bigserial PRIMARY KEY;
 # an exit date before the end of the queried time period
 # Client Id may be represented more than once - each enrollment counted
 
-dates = pd.date_range(start='1/01/2015',periods=12*5,freq='M')
+# dates = pd.date_range(start='1/01/2015',periods=12*5,freq='M')
+dates = ['2015','2016','2017','2018','2019']
 
 sql_create = '''
 DROP TABLE IF EXISTS num_active_monthly CASCADE;
-CREATE TABLE num_active_monthly (
-Act_Date VARCHAR PRIMARY KEY,
-Num_Act BIGINT,
-Null_Act BIGINT
-)
-'''
-with engine.connect() as c:
-    c.execute(sql_create)
-    
-sql_update = '''
-INSERT INTO num_active_monthly VALUES
-('{0}',
-(SELECT COUNT(a."Client_Id")
-FROM enrollment a
-LEFT JOIN exit_screen b
-ON a."Enrollment_Id" = b."Enrollment_Id"
-WHERE TO_CHAR(a."Added_Date",'YYYY-mm') <= '{0}'
-AND b."Exit_Date" > '{0}-01'),
-(SELECT COUNT(a."Client_Id")
-FROM enrollment a
-LEFT JOIN exit_screen b
-ON a."Enrollment_Id" = b."Enrollment_Id"
-WHERE TO_CHAR(a."Added_Date",'YYYY-mm') <= '{0}'
-AND b."Exit_Date" IS NULL))
-'''
+drop table if exists volume_active_programs cascade;
+drop table if exists volume_active cascade;
+CREATE TABLE volume_active_programs (
+Year VARCHAR,
+Num_Active BIGINT,
+Distinct_Active BIGINT,
+Project_Type_Group VARCHAR
+);
 
-for date in dates:
-    date = date.strftime('%Y-%m')
-    with engine.connect() as c:
-            c.execute(sql_update.format(date))
-
-
-# Table for number of active clients per year
-# Clients who were exclusively active (entered before year start, exited after)
-
-dates_y = ['2015','2016','2017','2018','2019']
-
-sql_create = '''
-DROP TABLE IF EXISTS num_active_yearly CASCADE;
-CREATE TABLE num_active_yearly (
-Act_Date VARCHAR PRIMARY KEY,
-Num_Act BIGINT,
-Null_Act BIGINT
+CREATE TABLE volume_active (
+Year VARCHAR,
+Num_Active BIGINT,
+Distinct_Active BIGINT
 );
 '''
 with engine.connect() as c:
     c.execute(sql_create)
     
+sql_update_programs = '''
+INSERT INTO volume_active_programs
+SELECT '{0}' as "Year",
+count(a."Client_Id") as "Num_Active",
+count(distinct a."Client_Id") as "Distinct_Active",
+c."Project_Type_Group" as "Project_Type_Group"
+FROM enrollment a
+LEFT JOIN exit_screen b
+ON a."Enrollment_Id" = b."Enrollment_Id"
+left join programs c 
+on a."Program_Id" = c."Program_Id"
+WHERE TO_CHAR(a."Added_Date",'YYYY') <= '{0}'
+AND (b."Exit_Date" > '{0}-01-01' or b."Exit_Date" is null)
+AND a."Added_Date" <> '2014-01-01'
+group by "Project_Type_Group","Year"
+	order by "Project_Type_Group", "Year"
+'''
 sql_update = '''
-INSERT INTO num_active_yearly VALUES
-('{0}',
-(SELECT COUNT(a."Client_Id")
+INSERT INTO volume_active
+SELECT '{0}' as "Year",
+count(a."Client_Id") as "Num_Active",
+count(distinct a."Client_Id") as "Distinct_Active"
 FROM enrollment a
 LEFT JOIN exit_screen b
 ON a."Enrollment_Id" = b."Enrollment_Id"
 WHERE TO_CHAR(a."Added_Date",'YYYY') <= '{0}'
-AND b."Exit_Date" > '{0}-01-01'),
-(SELECT COUNT(a."Client_Id")
-FROM enrollment a
-LEFT JOIN exit_screen b
-ON a."Enrollment_Id" = b."Enrollment_Id"
-WHERE TO_CHAR(a."Added_Date",'YYYY') <= '{0}'
-AND b."Exit_Date" is null));
+AND (b."Exit_Date" > '{0}-01-01' or b."Exit_Date" is null)
+AND a."Added_Date" <> '2014-01-01'
 '''
 
-for date in dates_y:
+for date in dates:
+    print(date)
     with engine.connect() as c:
-        c.execute(sql_update.format(date))
+            c.execute(sql_update.format(date))
+            c.execute(sql_update_programs.format(date))
+
+
+# Table for number of active clients per year
+# Clients who were exclusively active (entered before year start, exited after)
+
+# dates_y = ['2015','2016','2017','2018','2019']
+
+# sql_create = '''
+# DROP TABLE IF EXISTS num_active_yearly CASCADE;
+# CREATE TABLE num_active_yearly (
+# Act_Date VARCHAR PRIMARY KEY,
+# Num_Act BIGINT,
+# Null_Act BIGINT
+# );
+# '''
+# with engine.connect() as c:
+#     c.execute(sql_create)
+    
+# sql_update = '''
+# INSERT INTO num_active_yearly VALUES
+# ('{0}',
+# (SELECT COUNT(a."Client_Id")
+# FROM enrollment a
+# LEFT JOIN exit_screen b
+# ON a."Enrollment_Id" = b."Enrollment_Id"
+# WHERE TO_CHAR(a."Added_Date",'YYYY') <= '{0}'
+# AND b."Exit_Date" > '{0}-01-01'),
+# (SELECT COUNT(a."Client_Id")
+# FROM enrollment a
+# LEFT JOIN exit_screen b
+# ON a."Enrollment_Id" = b."Enrollment_Id"
+# WHERE TO_CHAR(a."Added_Date",'YYYY') <= '{0}'
+# AND b."Exit_Date" is null));
+# '''
+
+# for date in dates_y:
+#     with engine.connect() as c:
+#         c.execute(sql_update.format(date))
 
 
 
 with engine.connect() as c:
     sql = '''
-    DROP VIEW IF EXISTS monthly_in CASCADE;
-    
-    CREATE VIEW monthly_in AS
-    SELECT TO_CHAR(e."Added_Date", 'YYYY-mm'), COUNT(e."Client_Id") Num_in
-    FROM enrollment e
-    WHERE TO_CHAR(e."Added_Date", 'YYYY') > '2014'
-    GROUP BY TO_CHAR(e."Added_Date", 'YYYY-mm')
-    ORDER BY TO_CHAR(e."Added_Date", 'YYYY-mm') DESC;
-    
-    DROP VIEW IF EXISTS monthly_out CASCADE;
-    
-    CREATE VIEW monthly_out as
-    SELECT TO_CHAR(e."Exit_Date", 'YYYY-mm'), COUNT(e."Client_Id") Num_out
-    FROM exit_screen e
-    WHERE TO_CHAR(e."Exit_Date", 'YYYY') > '2014'
-    GROUP BY TO_CHAR(e."Exit_Date", 'YYYY-mm')
-    ORDER BY TO_CHAR(e."Exit_Date", 'YYYY-mm') DESC;
-    
-    DROP VIEW IF EXISTS yearly_in CASCADE;
-    
-    CREATE VIEW yearly_in as
-    SELECT TO_CHAR(e."Added_Date", 'YYYY') date, COUNT(e."Client_Id") Num_in
-    FROM enrollment e
-    WHERE TO_CHAR(e."Added_Date", 'YYYY') > '2014'
-    GROUP BY TO_CHAR(e."Added_Date", 'YYYY')
-    ORDER BY TO_CHAR(e."Added_Date", 'YYYY') DESC;
-    
-    DROP VIEW IF EXISTS yearly_out CASCADE;
-    
-    CREATE VIEW yearly_out as
-    SELECT TO_CHAR(e."Exit_Date", 'YYYY'), COUNT(e."Client_Id") Num_out
-    FROM exit_screen e
-    WHERE TO_CHAR(e."Exit_Date", 'YYYY') > '2014'
-    GROUP BY TO_CHAR(e."Exit_Date", 'YYYY')
-    ORDER BY TO_CHAR(e."Exit_Date", 'YYYY') DESC;
+DROP VIEW IF EXISTS monthly_in;
+DROP VIEW IF EXISTS monthly_out;
+DROP VIEW if exists yearly_in;
+drop view if exists yearly_out;
+drop view if exists volume_in;
+drop view if exists volume_out;
+drop view if exists volume_in_programs;
+drop view if exists volume_out_programs;
+drop view if exists volume_out_monthly;
+
+create view volume_in_programs as
+SELECT to_char(a."Added_Date", 'YYYY') as "Year",
+count(a."Client_Id") as "Num_in",
+count(distinct a."Client_Id") as "Num_in_distinct",
+c."Project_Type_Group" as "Project_Type_Group"
+FROM enrollment a
+left join programs c 
+on a."Program_Id" = c."Program_Id"
+where to_char(a."Added_Date", 'YYYY') > '2014'
+group by "Year","Project_Type_Group"
+order by "Year","Project_Type_Group";
+
+
+create view volume_out_programs as
+SELECT to_char(b."Exit_Date", 'YYYY') as "Year",
+count(a."Client_Id") as "Num_out",
+count(distinct a."Client_Id") as "Num_out_distinct",
+c."Project_Type_Group" as "Project_Type_Group"
+FROM enrollment a
+left join exit_screen b 
+on a."Enrollment_Id" = b."Enrollment_Id"
+left join programs c 
+on a."Program_Id" = c."Program_Id"
+where to_char(b."Exit_Date", 'YYYY') > '2014'
+group by "Year","Project_Type_Group"
+order by "Year","Project_Type_Group";
+
+create view volume_in as 
+SELECT to_char(a."Added_Date", 'YYYY') as "Year",
+count(a."Client_Id") as "Num_in",
+count(distinct a."Client_Id") as "Num_in_distinct"
+FROM enrollment a
+where to_char(a."Added_Date", 'YYYY') > '2014'
+group by "Year"
+order by "Year";
+
+create view volume_out as 
+SELECT to_char(b."Exit_Date", 'YYYY') as "Year",
+count(a."Client_Id") as "Num_out",
+count(distinct a."Client_Id") as "Num_out_distinct"
+FROM enrollment a
+left join exit_screen b 
+on a."Enrollment_Id" = b."Enrollment_Id"
+where to_char(b."Exit_Date", 'YYYY') > '2014'
+group by "Year"
+order by "Year";
+
+
+create view volume_out_monthly as 
+SELECT to_char(b."Exit_Date", 'YYYY') as "Year",
+to_char(b."Exit_Date",'YYYY-mm') as "Month",
+count(a."Client_Id") as "Num_out",
+count(distinct a."Client_Id") as "Num_out_distinct"
+FROM enrollment a
+left join exit_screen b 
+on a."Enrollment_Id" = b."Enrollment_Id"
+where to_char(b."Exit_Date", 'YYYY') > '2014'
+and to_char(b."Exit_Date", 'YYYY-mm') < '2019-08'
+group by "Year", "Month"
+order by "Year", "Month";
+
+
+drop table if exists volume_total;
+drop table if exists volume_total_programs;
+
+select a."year", a."num_active", a."distinct_active",
+b."Num_in", b."Num_in_distinct",
+c."Num_out", c."Num_out_distinct", a."project_type_group"
+into volume_total_programs
+from volume_active_programs as a
+left join volume_in_programs b
+on a."year" = b."Year" and a."project_type_group" = b."Project_Type_Group"
+left join volume_out_programs c
+on a."year" = c."Year" and a."project_type_group" = c."Project_Type_Group";
+
+
+create index indx_project_group 
+on volume_total_programs using btree
+(project_type_group, year);
+
+select a."year", a."num_active", a."distinct_active",
+b."Num_in", b."Num_in_distinct",
+c."Num_out", c."Num_out_distinct"
+into volume_total
+from volume_active as a
+left join volume_in b
+on a."year" = b."Year"
+left join volume_out c
+on a."year" = c."Year";
+
+
+
+
+
     '''
     c.execute(sql)
 
 
 
-# Create table for top 5 programs by enrollment by year
-dates_y = ['2015','2016','2017','2018','2019']
+# # Create table for top 5 programs by enrollment by year
+# dates_y = ['2015','2016','2017','2018','2019']
 
-sql_create = '''
-DROP TABLE IF EXISTS top_5_programs CASCADE;
-CREATE TABLE top_5_programs(
-"Date" VARCHAR(5),
-"Program" VARCHAR(100),
-"Num_Enroll" BIGINT);
-'''
-with engine.connect() as c:
-    c.execute(sql_create)
+# sql_create = '''
+# DROP TABLE IF EXISTS top_5_programs CASCADE;
+# CREATE TABLE top_5_programs(
+# "Date" VARCHAR(5),
+# "Program" VARCHAR(100),
+# "Num_Enroll" BIGINT);
+# '''
+# with engine.connect() as c:
+#     c.execute(sql_create)
     
-sql_update = '''
-INSERT INTO top_5_programs
+# sql_update = '''
+# INSERT INTO top_5_programs
 
-SELECT TO_CHAR(e."Added_Date",'YYYY') "Date", p."Program_Name", COUNT(e."Enrollment_Id")"Num_Enroll"
-FROM enrollment e
-LEFT JOIN programs p
-ON p."Program_Id" = e."Program_Id"
-WHERE TO_CHAR(e."Added_Date",'YYYY') = '{0}'
-GROUP BY TO_CHAR(e."Added_Date",'YYYY'), p."Program_Name" 
-ORDER BY COUNT(e."Enrollment_Id") DESC LIMIT 5;
-'''
+# SELECT TO_CHAR(e."Added_Date",'YYYY') "Date", p."Program_Name", COUNT(e."Enrollment_Id")"Num_Enroll"
+# FROM enrollment e
+# LEFT JOIN programs p
+# ON p."Program_Id" = e."Program_Id"
+# WHERE TO_CHAR(e."Added_Date",'YYYY') = '{0}'
+# GROUP BY TO_CHAR(e."Added_Date",'YYYY'), p."Program_Name" 
+# ORDER BY COUNT(e."Enrollment_Id") DESC LIMIT 5;
+# '''
 
-for date in dates_y:
-    with engine.connect() as c:
-        c.execute(sql_update.format(date))
+# for date in dates_y:
+#     with engine.connect() as c:
+#         c.execute(sql_update.format(date))
 
 
-# Create demographic tables
+# # Create demographic tables
 with engine.connect()as c:
     sql = '''
 UPDATE clients
@@ -419,16 +533,22 @@ WHERE "Race" IN ('Client Refused', 'Data Not Collected',
 'Client doesn''t Know')
 OR"Race" IS NULL;
 
-DROP VIEW IF EXISTS yearly_race CASCADE;
 
-CREATE VIEW yearly_race AS
-SELECT TO_CHAR(e."Added_Date",'YYYY') Date, c."Race", COUNT(distinct e."Client_Id") Num_People_Enroll
+DROP TABLE IF EXISTS yearly_race CASCADE;
+
+SELECT TO_CHAR(e."Added_Date",'YYYY') Date,
+p."Project_Type_Group" as "Project_Type",
+c."Race", 
+COUNT(distinct e."Client_Id") Num_People_Enroll
+into yearly_race
 FROM enrollment e
 LEFT JOIN clients c
 ON e."Client_Id" = c."Client_Id"
+left join programs p
+on e."Program_Id" = p."Program_Id"
 WHERE TO_CHAR(e."Added_Date",'YYYY') > '2014'
-GROUP BY TO_CHAR(e."Added_Date",'YYYY'), c."Race"
-ORDER BY TO_CHAR(e."Added_Date",'YYYY'), COUNT(e."Enrollment_Id");
+GROUP BY TO_CHAR(e."Added_Date",'YYYY'), p."Project_Type_Group", c."Race"
+ORDER BY TO_CHAR(e."Added_Date",'YYYY'), p."Project_Type_Group",COUNT(e."Enrollment_Id");
 
 UPDATE clients
 SET "Gender" = 'Unknown'
@@ -436,20 +556,76 @@ WHERE "Gender" IN ('Client doesn''t know', 'Client refused',
 'Data not collected')
 OR "Gender" IS NULL;
 
-DROP VIEW IF EXISTS yearly_gender CASCADE;
+DROP TABLE IF EXISTS yearly_gender CASCADE;
 
-CREATE VIEW yearly_gender AS
-SELECT TO_CHAR(e."Added_Date",'YYYY') Date, c."Gender", COUNT(distinct e."Client_Id") Num_People_Enroll
+SELECT TO_CHAR(e."Added_Date",'YYYY') Date,
+p."Project_Type_Group" as "Project_Type",
+c."Gender", 
+COUNT(distinct e."Client_Id") Num_People_Enroll
+into yearly_gender
 FROM enrollment e
 LEFT JOIN clients c
 ON e."Client_Id" = c."Client_Id"
+left join programs p
+on e."Program_Id" = p."Program_Id"
 WHERE TO_CHAR(e."Added_Date",'YYYY') > '2014'
-GROUP BY TO_CHAR(e."Added_Date",'YYYY'), c."Gender"
-ORDER BY TO_CHAR(e."Added_Date",'YYYY'), COUNT(distinct e."Client_Id");
+GROUP BY TO_CHAR(e."Added_Date",'YYYY'), p."Project_Type_Group", c."Gender"
+ORDER BY TO_CHAR(e."Added_Date",'YYYY'), p."Project_Type_Group", c."Gender";
 
 
-DROP VIEW IF EXISTS yearly_age;
-CREATE VIEW yearly_age AS
+'''
+    c.execute(sql)
+
+
+create_age = '''
+    drop table if exists age;
+    drop table if exists age_prog;
+    create table age_prog (
+        "Date" varchar,
+        "Project_Type" varchar,
+        "Age" int,
+        "Num_Clients" bigint
+    );
+    drop table if exists age_no_prog;
+    create table age_no_prog (
+        "Date" varchar,
+        "Age" int,
+        "Num_Clients" bigint
+    );
+'''
+
+with engine.connect() as c:
+    c.execute(create_age)
+
+years = ['2015','2016','2017','2018','2019']
+
+age_sql = '''
+insert into age_prog 
+  with t as (
+SELECT TO_CHAR(e."Added_Date",'YYYY') "Date",
+((e."Added_Date"::date - c."Birth_Date"::date)/365) "Age",
+p."Project_Type_Group" as "Project_Type"
+FROM enrollment e
+LEFT JOIN 
+clients c 
+ON e."Client_Id" = c."Client_Id"
+left join programs p
+on e."Program_Id" = p."Program_Id"
+WHERE TO_CHAR(e."Added_Date",'YYYY') > '2014'
+and c."Birth_Date" is not null
+ORDER BY "Date", "Project_Type", "Age"
+	)
+	select "Date", "Project_Type", "Age", count(*) from t
+	where "Date" = '{}'
+	and "Age" < 100
+	group by "Age","Date", "Project_Type"
+	order by "Date", "Project_Type";
+
+'''
+
+age_sql_no_prog = '''
+insert into age_no_prog
+  with t as (
 SELECT TO_CHAR(e."Added_Date",'YYYY') "Date",
 ((e."Added_Date"::date - c."Birth_Date"::date)/365) "Age"
 FROM enrollment e
@@ -458,9 +634,20 @@ clients c
 ON e."Client_Id" = c."Client_Id"
 WHERE TO_CHAR(e."Added_Date",'YYYY') > '2014'
 and c."Birth_Date" is not null
-ORDER BY "Date", "Age";
+ORDER BY "Date", "Age"
+	)
+	select "Date", "Age", count(*) from t
+	where "Date" = '{}'
+	and "Age" < 100
+	group by "Age","Date"
+	order by "Date", "Age"
 '''
-    c.execute(sql)
+
+with engine.connect() as c:
+    for year in years:
+        c.execute(age_sql.format(year))
+        c.execute(age_sql_no_prog.format(year))
+
 
 
 # Table for % to permanent housing at program exit
@@ -531,29 +718,29 @@ ORDER BY TO_CHAR(e."Exit_Date", 'YYYY') DESC;
 
 
 
-# Create view for number of unique individuals to programs per year where the client was homeless on entry
-from sqlalchemy import text
-sql_homeless = text('''
-DROP VIEW IF EXISTS yearly_enroll_homeless CASCADE;
+# # Create view for number of unique individuals to programs per year where the client was homeless on entry
+# from sqlalchemy import text
+# sql_homeless = text('''
+# DROP VIEW IF EXISTS yearly_enroll_homeless CASCADE;
 
-CREATE VIEW yearly_enroll_homeless AS
-SELECT DISTINCT TO_CHAR("Added_Date", 'YYYY') "Date",
-COUNT(distinct "Client_Id") "Num_Homeless"
-FROM enrollment
-WHERE ("Housing_Status" LIKE '%Category 1%' OR
-"Prior_Residence" = 'Emergency Shelter, including hotel/motel paid for with voucher'
-OR "Prior_Residence" = 'Hospital or other residential non-psychiatric medical facility'
-OR "Prior_Residence" = 'Place not meant for habitation'
-OR "Prior_Residence" = 'Psychiatric hospital or other psychiatric facility'
-OR "Prior_Residence" = 'Transitional housing for homeless persons')
-AND TO_CHAR("Added_Date", 'YYYY') > '2014'
-GROUP BY "Date"
-ORDER BY "Date" DESC;
-''')
+# CREATE VIEW yearly_enroll_homeless AS
+# SELECT DISTINCT TO_CHAR("Added_Date", 'YYYY') "Date",
+# COUNT(distinct "Client_Id") "Num_Homeless"
+# FROM enrollment
+# WHERE ("Housing_Status" LIKE '%Category 1%' OR
+# "Prior_Residence" = 'Emergency Shelter, including hotel/motel paid for with voucher'
+# OR "Prior_Residence" = 'Hospital or other residential non-psychiatric medical facility'
+# OR "Prior_Residence" = 'Place not meant for habitation'
+# OR "Prior_Residence" = 'Psychiatric hospital or other psychiatric facility'
+# OR "Prior_Residence" = 'Transitional housing for homeless persons')
+# AND TO_CHAR("Added_Date", 'YYYY') > '2014'
+# GROUP BY "Date"
+# ORDER BY "Date" DESC;
+# ''')
 
 
-with engine.connect() as connection:
-    connection.execute(sql_homeless)
+# with engine.connect() as connection:
+#     connection.execute(sql_homeless)
 
 
 
@@ -612,141 +799,135 @@ FROM num_to_ph;
 
 
 
-with engine.connect() as c:
-    sql= '''
-ALTER TABLE num_active_yearly
-ADD COLUMN total_act BIGINT;
-UPDATE num_active_yearly 
-SET "total_act" = "null_act" + "num_act";
+# with engine.connect() as c:
+#     sql= '''
+# ALTER TABLE num_active_yearly
+# ADD COLUMN total_act BIGINT;
+# UPDATE num_active_yearly 
+# SET "total_act" = "null_act" + "num_act";
 
-ALTER TABLE num_active_monthly
-ADD COLUMN total_act BIGINT;
-UPDATE num_active_monthly
-SET "total_act" = "null_act" + "num_act";
-'''
-    c.execute(sql)
+# ALTER TABLE num_active_monthly
+# ADD COLUMN total_act BIGINT;
+# UPDATE num_active_monthly
+# SET "total_act" = "null_act" + "num_act";
+# '''
+#     c.execute(sql)
 
 
 
-#Pandas manipulation for quartiles needed for age box plot
-sql = 'SELECT * FROM yearly_age'
-con = engine.connect()
-age = pd.read_sql(sql=sql, con=con)
-for index,row in age.iterrows():
-    if row[1] >= 100:
-        age.drop([index], inplace=True)
+# #Pandas manipulation for quartiles needed for age box plot
+# sql = 'SELECT * FROM yearly_age'
+# con = engine.connect()
+# age = pd.read_sql(sql=sql, con=con)
+# for index,row in age.iterrows():
+#     if row[1] >= 100:
+#         age.drop([index], inplace=True)
         
-years = ['2015','2016','2017','2018','2019']
-age_stats = {}
-for year in years:
-    age_stats[year] = age.loc[age.Date == year].describe().T.values
+# years = ['2015','2016','2017','2018','2019']
+# age_stats = {}
+# for year in years:
+#     age_stats[year] = age.loc[age.Date == year].describe().T.values
 
-age_df = pd.DataFrame(columns=['Count','Mean','std','Min','lower','median','upper','max','date'])
-counter = 0
-for key in age_stats:
-    age_df.loc[counter] = np.append(age_stats[key][0],key)
-    counter += 1
+# age_df = pd.DataFrame(columns=['Count','Mean','std','Min','lower','median','upper','max','date'])
+# counter = 0
+# for key in age_stats:
+#     age_df.loc[counter] = np.append(age_stats[key][0],key)
+#     counter += 1
     
-age_df.to_sql(name='yearly_age_table', if_exists='replace',index=False, con=con)
+# age_df.to_sql(name='yearly_age_table', if_exists='replace',index=False, con=con)
 
 
-# Changed selecting from yearly age language due to new column names 
+# # Changed selecting from yearly age language due to new column names 
 
 with engine.connect() as c:
     sql= '''
+
+DROP TABLE IF EXISTS race_no_prog CASCADE;
+SELECT TO_CHAR(e."Added_Date",'YYYY') Date, c."Race", COUNT(distinct e."Client_Id") Num_People_Enroll
+into race_no_prog
+FROM enrollment e
+LEFT JOIN clients c
+ON e."Client_Id" = c."Client_Id"
+WHERE TO_CHAR(e."Added_Date",'YYYY') > '2014'
+GROUP BY TO_CHAR(e."Added_Date",'YYYY'), c."Race"
+ORDER BY TO_CHAR(e."Added_Date",'YYYY'), COUNT(e."Enrollment_Id");
+
+
+DROP TABLE IF EXISTS gender_no_prog CASCADE;
+SELECT TO_CHAR(e."Added_Date",'YYYY') Date, c."Gender", COUNT(distinct e."Client_Id") Num_People_Enroll
+into gender_no_prog
+FROM enrollment e
+LEFT JOIN clients c
+ON e."Client_Id" = c."Client_Id"
+WHERE TO_CHAR(e."Added_Date",'YYYY') > '2014'
+GROUP BY TO_CHAR(e."Added_Date",'YYYY'), c."Gender"
+ORDER BY TO_CHAR(e."Added_Date",'YYYY'), COUNT(distinct e."Client_Id");
+
+
 DROP TABLE if exists monthly_flow;
-SELECT A."num_in", 
-B."num_out",
-C."total_act", C."act_date",
+DROP TABLE if exists outcomes_sum_monthly; 
+SELECT 
+B."Num_out",B."Month",
 D."num_ph", 
-E."Percent" 
-INTO monthly_flow
-FROM monthly_in A FULL JOIN monthly_out B ON A."to_char" = B."to_char"
-FULL JOIN num_active_monthly C on A."to_char" = C."act_date"
-FULL JOIN num_to_ph D on D."month_exit" = A."to_char"
+E."Percent"::int
+INTO outcomes_sum_monthly
+FROM volume_out_monthly B 
+FULL JOIN num_to_ph D on D."month_exit" = B."Month"
 FULL JOIN percent_ph_mo E ON E."Date" = D."month_exit"
-WHERE A."num_in" IS NOT NULL
-ORDER BY "act_date" DESC;
+ORDER BY "Month";
 
 DROP TABLE if exists yearly_flow;
-SELECT A."num_in", 
-B."num_out",
-C."total_act", C."act_date",
-D."num_exit",
-E."Avg_Time_to_PH", 
-F."Percent"
-INTO yearly_flow
-FROM yearly_in A FULL JOIN yearly_out B ON A."date" = B."to_char"
-FULL JOIN num_active_yearly C ON A."date" = C."act_date"
-FULL JOIN yearly_to_ph D ON A."date" = D."date"
-FULL JOIN avg_to_ph E ON E."Date" = A."date"
-FULL JOIN percent_ph_yr F ON F."Date"=A."date"
-ORDER BY "act_date" DESC;
+drop table if exists outcomes_sum_yearly;
+SELECT 
+E."Avg_Time_to_PH"::int, 
+F."Percent"::int, F."Date"
+INTO outcomes_sum_yearly
+FROM avg_to_ph E 
+FULL JOIN percent_ph_yr F ON F."Date"= E."Date"
+order by "Date";
 
 DROP TABLE if exists demographics;
-WITH race AS
-(
-SELECT ROW_NUMBER() OVER(ORDER BY "date") AS ROWNUM, * FROM yearly_race
-),
-gender AS
-(
-SELECT ROW_NUMBER() OVER (ORDER BY "date") AS ROWNUM, * FROM yearly_gender
-),
-age as 
-(
-SELECT ROW_NUMBER() OVER (ORDER BY "date") AS ROWNUM, * FROM yearly_age_table
-),
-progs as 
-(
-SELECT ROW_NUMBER() OVER (ORDER BY "Date") AS ROWNUM, * FROM top_5_programs
-)
-SELECT 
-A."Race", A."num_people_enroll" race_enroll, A."date" RDate,
-B."Gender", B."num_people_enroll" gender_enroll, B."date" GDate,
-D."Count", D."Min", D."lower",D."median",D."upper", D."max", D."date" ADate,
-E."Program", E."Num_Enroll" prog_enroll, E."Date" PDate
-INTO demographics 
-FROM race A 
-FULL JOIN gender B ON A.ROWNUM = B.ROWNUM
-FULL JOIN age D on A.ROWNUM = D.ROWNUM
-FULL JOIN progs E on A.ROWNUM = E.ROWNUM;
+
+
+DELETE FROM outcomes_sum_monthly
+where "Num_out" is null;
     '''
     c.execute(sql)
 
 
-# Make projection for end of 2019 data for comparison in yearly activity chart
-# Simple approach  just using means of previous corresponding months of data for in and out
-# Projections for active is tricker to get, so just assumes 5% growth in active participants based on 2018 growth
+# # Make projection for end of 2019 data for comparison in yearly activity chart
+# # Simple approach  just using means of previous corresponding months of data for in and out
+# # Projections for active is tricker to get, so just assumes 5% growth in active participants based on 2018 growth
 
-# Monthly table data manipulation 
-con = engine.connect()
-sql = 'SELECT * FROM monthly_flow'
-monthly = pd.read_sql(sql=sql,con=con)
-replace_dates = ['2019-09','2019-10','2019-11','2019-12']
-monthly['month'] = monthly['act_date'].apply(lambda x : str(x).split('-')[1])
-monthly.set_index(monthly.act_date, inplace=True)
-for date in replace_dates:
-    monthly.loc[date,'num_in'] = int(monthly.loc[monthly.month==date.split('-')[1],'num_in'].mean())
-    monthly.loc[date,'num_out'] = int(monthly.loc[monthly.month==date.split('-')[1],'num_out'].mean())
-    monthly.loc[date,'total_act'] = int(monthly.loc[monthly.month==date.split('-')[1],'total_act'].mean())
-    monthly.loc[date,'num_ph'] = int(monthly.loc[monthly.month==date.split('-')[1],'num_ph'].mean())
-    monthly.loc[date,'Percent'] = (monthly.loc[date,'num_ph'] / monthly.loc[date,'num_out'])*100
-    monthly.loc[date,'act_date'] = date
+# # Monthly table data manipulation 
+# con = engine.connect()
+# sql = 'SELECT * FROM monthly_flow'
+# monthly = pd.read_sql(sql=sql,con=con)
+# replace_dates = ['2019-09','2019-10','2019-11','2019-12']
+# monthly['month'] = monthly['act_date'].apply(lambda x : str(x).split('-')[1])
+# monthly.set_index(monthly.act_date, inplace=True)
+# for date in replace_dates:
+#     monthly.loc[date,'num_in'] = int(monthly.loc[monthly.month==date.split('-')[1],'num_in'].mean())
+#     monthly.loc[date,'num_out'] = int(monthly.loc[monthly.month==date.split('-')[1],'num_out'].mean())
+#     monthly.loc[date,'total_act'] = int(monthly.loc[monthly.month==date.split('-')[1],'total_act'].mean())
+#     monthly.loc[date,'num_ph'] = int(monthly.loc[monthly.month==date.split('-')[1],'num_ph'].mean())
+#     monthly.loc[date,'Percent'] = (monthly.loc[date,'num_ph'] / monthly.loc[date,'num_out'])*100
+#     monthly.loc[date,'act_date'] = date
     
 
-monthly.reset_index(drop=True, inplace=True)
-monthly['date'] = pd.to_datetime(monthly['act_date'])
-monthly.sort_values('date', inplace=True, ascending=False)
+# monthly.reset_index(drop=True, inplace=True)
+# monthly['date'] = pd.to_datetime(monthly['act_date'])
+# monthly.sort_values('date', inplace=True, ascending=False)
 
-# Yearly flow data table manipulation 
-sql = 'SELECT * FROM yearly_flow'
-yearly = pd.read_sql(sql=sql,con=con)
-yearly.loc[yearly.act_date=='2019','num_in'] = monthly.loc[monthly.date.dt.year==2019,'num_in'].sum()
-yearly.loc[yearly.act_date=='2019','num_out'] = monthly.loc[monthly.date.dt.year==2019,'num_out'].sum()
-yearly.loc[yearly.act_date=='2019','total_act'] = 22001 
+# # Yearly flow data table manipulation 
+# sql = 'SELECT * FROM yearly_flow'
+# yearly = pd.read_sql(sql=sql,con=con)
+# yearly.loc[yearly.act_date=='2019','num_in'] = monthly.loc[monthly.date.dt.year==2019,'num_in'].sum()
+# yearly.loc[yearly.act_date=='2019','num_out'] = monthly.loc[monthly.date.dt.year==2019,'num_out'].sum()
+# yearly.loc[yearly.act_date=='2019','total_act'] = 22001 
 
-# Write manuipulated dataframes back to db 
-yearly.to_sql(name='yearly_flow', con=con, if_exists='replace', index=False)
-# Drop created columns needed for making predictions for last months of 2019 
-monthly.drop(columns=['date', 'month'], inplace=True)
-monthly.to_sql(name='monthly_flow', con=con, if_exists='replace', index=False)
+# # Write manuipulated dataframes back to db 
+# yearly.to_sql(name='yearly_flow', con=con, if_exists='replace', index=False)
+# # Drop created columns needed for making predictions for last months of 2019 
+# monthly.drop(columns=['date', 'month'], inplace=True)
+# monthly.to_sql(name='monthly_flow', con=con, if_exists='replace', index=False)

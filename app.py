@@ -1,20 +1,23 @@
 # Flask app for HMIS dashboard
 
 from flask import Flask, jsonify, render_template
-
+# from flask_cors import CORS 
 
 import psycopg2
-import pandas as pd 
+import pandas as pd
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(r'HMIS\local.env')
 
 app = Flask(__name__)
+# CORS(app)
 
-url = os.environ['DATABASE_URL']
 
-conn = psycopg2.connect(url, sslmode='require')
+url = os.environ['DATABASE_URL_TESTING']
+
+conn = psycopg2.connect(url)
+
 
 
 @app.route('/')
@@ -22,93 +25,91 @@ def home():
     
     return render_template('index.html')
 
-# Add routes to pull table views
-# Activity data
-@app.route('/api')
-def get_data():
-
-    response = {'flow':{'yearly':{'in':{},
-                                'out':{},
-                                'active':{},
-                                'distinct_active':{},
-                                'distinct_in':{},
-                                'distinct_out':{}},
-                    'monthly':{'in':{},
-                                'out':{},
-                                'active':{}},
-                    'top_5':{'2015':[],
-                                '2016':[],
-                                '2017':[],
-                                '2018':[],
-                                '2019':[],
-                            None:[]}},
-                'outcomes':{'yearly':{'exit_ph':{},
-                                    'exit_all':{},
-                                    'average':{},
-                                    'percent_ph':{}
-                                    },
-                        'monthly':{'exit_ph':{},
-                                    'exit_all':{},
-                                    'percent_ph':{}}},
-                'demo':{'age':{'2015':[],
-                                '2016':[],
-                                '2017':[],
-                                '2018':[],
-                                '2019':[],
-                            None:[]},
-                    'race':{'2015':[],
-                                '2016':[],
-                                '2017':[],
-                                '2018':[],
-                                '2019':[],
-                            None: []},
-                    'sex':{'2015':[],
-                                '2016':[],
-                                '2017':[],
-                                '2018':[],
-                                '2019':[],
-                            None:[]}}
-                    } 
-                    
+#volume route
+@app.route('/api/volume/<project_type>')
+def get_volume_date(project_type):
+    response = {'in':{},
+                'in_dist':{},
+                'out':{},
+                'out_dist':{},
+                'active':{},
+                'active_dist':{}
+    }
+    if project_type == 'All':
+        fill = 'volume_total'
+    else:
+        fill = '''volume_total_programs WHERE "project_type_group" = '{}' '''.format(project_type)
+    sql = '''
+    SELECT * from {} 
+    '''.format(fill)
     with conn.cursor() as c:
-        c.execute('Select * from yearly_flow')
+        c.execute(sql)
         rs = c.fetchall()
         for r in rs:
-            response['flow']['yearly']['in'][r[3]] = r[0]
-            response['flow']['yearly']['out'][r[3]] = r[1]
-            response['outcomes']['yearly']['exit_all'][r[3]] = r[1]
-            response['outcomes']['yearly']['exit_ph'][r[3]] = r[4]
-            response['outcomes']['yearly']['average'][r[3]] = int(r[5])
-            response['flow']['yearly']['active'][r[3]] = r[2]
-            response['outcomes']['yearly']['percent_ph'][r[3]]=int(r[6])
-            response['flow']['yearly']['distinct_active'][r[3]] = r[7]
-            response['flow']['yearly']['distinct_in'][r[3]] = r[8]
-            response['flow']['yearly']['distinct_out'][r[3]] = r[9]
-        c.execute('Select * from monthly_flow')
-        rs = c.fetchall()
-        for r in rs:
-            response['flow']['monthly']['in'][r[3]] = r[0]
-            response['flow']['monthly']['active'][r[3]] = r[2]
-            response['flow']['monthly']['out'][r[3]] = r[1]
-            response['outcomes']['monthly']['exit_all'][r[3]] = r[1]
-            response['outcomes']['monthly']['exit_ph'][r[3]] = r[4]
-            response['outcomes']['monthly']['percent_ph'][r[3]]=int(r[5])
-        c.execute('Select * from demographics')
-        rs = c.fetchall()
-        for r in rs:
-            response['demo']['age'][r[12]].append([r[7],r[8],r[9],r[10],r[11]])
-            response['demo']['sex'][r[5]].append([r[3],r[4]])
-            response['demo']['race'][r[2]].append([r[0],r[1]])
-            response['flow']['top_5'][r[15]].append([r[13],r[14]])
-            
-    del response['demo']['age'][None]
-    del response['demo']['sex'][None]
-    del response['demo']['race'][None]
-    del response['flow']['top_5'][None]
-    
+            response['in'][r[0]] = r[3]
+            response['in_dist'][r[0]] = r[4]
+            response['out'][r[0]] = r[5]
+            response['out_dist'][r[0]] = r[6]
+            response['active'][r[0]] = r[1]
+            response['active_dist'][r[0]] = r[2]
+
     return jsonify(response)
 
 
+@app.route('/api/outcomes')
+def get_outcomes_data():
+    response = []
+    with conn.cursor() as c:
+        c.execute('''
+        SELECT * FROM outcomes_sum_monthly
+        ''')
+        response.append(c.fetchall())
+        
+        c.execute('''
+        SELECT * FROM outcomes_sum_yearly
+        ''')
+        response.append(c.fetchall())
+
+    return jsonify(response)
+
+
+@app.route('/api/demo/<year>/<project_type>')
+def get_demo_data(year, project_type):
+    response = {'age':{},
+                    'race':{},
+                    'sex':{}}
+    if project_type == 'All':
+        with conn.cursor() as c:
+            c.execute('''SELECT * FROM age_no_prog where "Date" = '{}' '''.format(year))
+            rs = c.fetchall()
+            for r in rs:
+                response['age'][r[1]] = r[2] 
+            c.execute('''SELECT * FROM gender_no_prog where "date" = '{}' '''.format(year))
+            rs = c.fetchall()
+            for r in rs:
+                response['sex'][r[1]] = r[2]
+            c.execute('''SELECT * FROM race_no_prog where "date" = '{}' '''.format(year))
+            rs = c.fetchall()
+            for r in rs:
+                response['race'][r[1]] = r[2]
+    
+    else:
+        with conn.cursor() as c:
+            c.execute('''SELECT * FROM age_prog where "Date" = '{}' and "Project_Type" = '{}' '''.format(year, project_type))
+            rs = c.fetchall()
+            for r in rs:
+                response['age'][r[2]] = r[3] 
+            c.execute('''SELECT * FROM yearly_gender where "date" = '{}' and "Project_Type" = '{}' '''.format(year, project_type))
+            rs = c.fetchall()
+            for r in rs:
+                response['sex'][r[2]] = r[3]
+            c.execute('''SELECT * FROM yearly_race where "date" = '{}' and "Project_Type" = '{}' '''.format(year, project_type))
+            rs = c.fetchall()
+            for r in rs:
+                response['race'][r[2]] = r[3]
+
+        
+    return response
 
 @app.route('/api/source')
 def get_source():
@@ -126,5 +127,6 @@ def get_source():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
