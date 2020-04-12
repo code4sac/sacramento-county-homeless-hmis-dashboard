@@ -1,121 +1,105 @@
 // HMIS dashboard
 
-// var t0 = performance.now();
-var url = '/api'
-d3.json(url, function(data) {
+var volume_url = '/api/volume/'
+var outcomes_url = '/api/outcomes'
+var demo_url = '/api/demo/'
+
+fetch(volume_url+"All").then( response => {
+    return response.json();
+}).then(data => {
     // console.log('Full Data: ', data);
-    var flowData = data['flow'];
-    var outcomesData = data['outcomes']
-    var demoData = data['demo']
-    var filteredFlow = filterFlow('2018',flowData);
-    var filteredOutcomes = filterOutcomes('2018', outcomesData);
-    var filteredDemo = filterDemo('2018', demoData);
-    var yearlyData = unpackPage(data)
-
-    buildPage(filteredFlow, filteredOutcomes, filteredDemo, yearlyData);
-    // console.log('2018 Filtered Data for PH row: ', filteredOutcomes);
-    // console.log('2018 Filtered Data for in/out/exit row: ', filteredFlow);
-    // console.log('2018 Filtered Data for Demo row: ', filteredDemo);
-    // console.log('Full yearly data for page load yearly graphs: ', yearlyData);
-    // var t1 = performance.now();
-    // console.log("Call to get and log data took " + (t1 - t0) + " milliseconds.");
-
-    //Fill drop down with year options
-    yearlyData.years.forEach(item => {
-        d3.select('#selDataset').append("option").text(item).attr("value", item)
+    programs  = ['Permanent Housing', 'Emergency Shelter','Rapid Re-Housing','Street Outreach','Transitional Housing','Other']
+    programs.forEach(item => {
+        d3.select('#selDatasetVolume').append("option").text(item).attr("value", item);
+        d3.select('#selDatasetDemo').append("option").text(item).attr("value", item);
     });
+    var years = [2015,2016,2017,2018,2019]
+    years.forEach(item => {
+        d3.select('#selDataset').append("option").text(item).attr("value", String(item))
+    });
+    var volume_data = unpackVolume(data);
+    buildYearlyBar(volume_data);
+    buildYearlyDistinctBar(volume_data);
 });
 
- 
-//function to unpack yearly data for page load yearly data graphs
-function unpackPage(responseData) {
-    var yearly = {}
-    yearly['years'] = Object.entries(responseData.flow.yearly.active).map(d => d[0]);
-    yearly['in'] = Object.entries(responseData.flow.yearly.in).map(d => d[1]);
-    yearly['out'] = Object.entries(responseData.flow.yearly.out).map(d => d[1]);
-    yearly['active'] = Object.entries(responseData.flow.yearly.active).map(d => d[1]);
-    yearly['distinct_active'] = Object.entries(responseData.flow.yearly.distinct_active).map(d => d[1]);
-    yearly['distinct_in'] = Object.entries(responseData.flow.yearly.distinct_in).map(d => d[1]);
-    yearly['distinct_out'] = Object.entries(responseData.flow.yearly.distinct_out).map(d => d[1]);
-    yearly['monthlyOutcomes'] = {'exitAll':responseData.outcomes.monthly.exit_all,
-                                'exitPH': responseData.outcomes.monthly.exit_ph,
-                                'percentPHmo': responseData.outcomes.monthly.percent_ph};
-    return yearly
+function unpackVolume(data){
+    var volume_data = {};
+    volume_data['years'] = Object.entries(data.in).map(d => d[0]);
+    volume_data['in'] = Object.entries(data.in).map(d => d[1]);
+    volume_data['out'] = Object.entries(data.out).map(d => d[1]);
+    volume_data['active'] = Object.entries(data.active).map(d => d[1]);
+    volume_data['distinct_active'] = Object.entries(data.active_dist).map(d => d[1]);
+    volume_data['distinct_in'] = Object.entries(data.in_dist).map(d => d[1]);
+    volume_data['distinct_out'] = Object.entries(data.out_dist).map(d => d[1]);
+    return volume_data
 }
 
-// function to filter flowdata
-// returns object with all filtered data needed for flowdata row for selected year
-function filterFlow(year, flowData) {
-    function monthlyDictFilter(d) {
-        return (String(d).split('-')[0] === year)
-    }
-    var filtered = {};
-    filtered['months'] = Object.entries(flowData.monthly.active).filter(monthlyDictFilter).map(d => d[0]);
-    filtered['in'] = Object.entries(flowData.monthly.in).filter(monthlyDictFilter).map(d => d[1]);
-    filtered['out'] = Object.entries(flowData.monthly.out).filter(monthlyDictFilter).map(d => d[1]);
-    filtered['active'] = Object.entries(flowData.monthly.active).filter(monthlyDictFilter).map(d => d[1]);
-    filtered['top5'] = flowData.top_5[year]
-    // limit predicted monthly values
-    if (year === '2019'){
-        filtered.in.length = 8;
-        filtered.out.length = 8;
-        filtered.active.length = 8;
-    }
-    
-    return filtered 
-}
-// function to filter ph data
-function filterOutcomes(year, outcomesData) {
-    function monthlyDictFilter(d) {
-        return (String(d[0]).split('-')[0] === year)
-    }
-    var filtered = {}
-    // only need to filter card data for exit to PH filter,  will plot all lines and change "active" class when selected 
-    // to make the selected line stand out 
-    filtered['avgTimeToPH'] = Object.entries(outcomesData.yearly.average).filter(monthlyDictFilter).map(d => d[1]);
-    filtered['percentPHyear'] = Object.entries(outcomesData.yearly.percent_ph).filter(monthlyDictFilter).map(d => d[1]);
-    filtered['totalToPH'] = Object.entries(outcomesData.yearly.exit_ph).filter(monthlyDictFilter).map(d => d[1]);
-    filtered['totalExit'] = Object.entries(outcomesData.yearly.exit_all).filter(monthlyDictFilter).map(d => d[1])
+fetch(outcomes_url).then(response => {
+    return response.json();
+}).then( data => {
+    // console.log('Full Data: ', data);
+    // console.log(data);
+    dataFormat = unpackOutcomes(data);
+    buildOutcomes(dataFormat);
+});
+fetch(demo_url+"2018/"+"All").then(response => {
+    return response.json();
+}).then( data => {
+    // console.log('Full Data: ', data);
+    // console.log(data);
+    updateDemo(data, '2018','All');
+});
 
-    return filtered 
+function unpackOutcomes(response) {
+    return_data = {'yearly':{'average':{},
+                        'percent_ph':{}
+                        },
+                        'monthly':{'exit_ph':{},
+                                    'exit_all':{},
+                                    'percent_ph':{},
+                                    }};
+    var monthly = response[0];
+    for (var i = 0; i < monthly.length; i++) {
+        return_data.monthly.exit_ph[monthly[i][1]] = monthly[i][2]
+        return_data.monthly.exit_all[monthly[i][1]] = monthly[i][0]
+        return_data.monthly.percent_ph[monthly[i][1]] = monthly[i][3]
+    };
+    var yearly = response[1];
+    for (var i = 0; i < yearly.length; i++) {
+        return_data.yearly.average[yearly[i][2]] = yearly[i][0]
+        return_data.yearly.percent_ph[yearly[i][2]] = yearly[i][1]
+    };
+    // response[0].forEach(item => {
+        
+    //     return_data.monthly.exit_ph[item[1]] = item[2]
+    //     return_data.monthly.exit_all[item[1]] = item[0]
+    //     return_data.monthly.percent_ph[item[1]] = item[3]
+    // });
+    // response[1].forEach(item => {
+    //     return_data.yearly.average[item[2]] = item[0]
+    //     return_data.yearly.percent_ph[item[2]] = item[1]
+    // });
+    console.log(return_data);
+    return return_data
 }
 
-// function to filter demographic data based on input year 
-function filterDemo(year, demoData) {
-    function monthlyDictFilter(d) {
-        return (String(d[0]).split('-')[0] === year)
-    }
-    var filtered = {}
-    filtered['age'] = Object.entries(demoData.age).filter(monthlyDictFilter).map(d => d[1]);
-    filtered['race'] = Object.entries(demoData.race).filter(monthlyDictFilter).map(d => d[1]);
-    filtered['gender'] = Object.entries(demoData.sex).filter(monthlyDictFilter).map(d => d[1]);
-    return filtered 
-}
-// function to build graphs fill cards
-// will take filtered objects with flow, ph, demo data for given year
-function buildPage(flow, outcomes, demo, yearlyData){
-   
-    // code to buld the graphs that have static data(yearly outcomes, yearly flow)
-    // object variable to separate out yearly outcome data
-    var monthlyOutcomesgraph = {}
-    yearlyData.years.forEach(function(year) {
+
+
+
+function buildOutcomes(outcomesData) {
+    var monthlyOutcomesgraph = {};
+    var years_list = ['2015','2016','2017','2018','2019'];
+    years_list.forEach(function(year) {
         function monthlyDictFilter(d) {
             return (String(d[0]).split('-')[0] === year)
         }
         monthlyOutcomesgraph[year] = {
-            'percentPHmo': Object.entries(yearlyData.monthlyOutcomes.percentPHmo).filter(monthlyDictFilter).map(d => d[1]),
-            'exitAll': Object.entries(yearlyData.monthlyOutcomes.exitAll).filter(monthlyDictFilter).map(d => d[1]),
-            'exitPH': Object.entries(yearlyData.monthlyOutcomes.exitPH).filter(monthlyDictFilter).map(d => d[1])
+            'percentPHmo': Object.entries(outcomesData.monthly.percent_ph).filter(monthlyDictFilter).map(d => d[1]),
+            'exitAll': Object.entries(outcomesData.monthly.exit_all).filter(monthlyDictFilter).map(d => d[1]),
+            'exitPH': Object.entries(outcomesData.monthly.exit_ph).filter(monthlyDictFilter).map(d => d[1])
         }
     });
-    console.log('Data For Page Load Exit to PH Graph : ', monthlyOutcomesgraph['2015'].percentPHmo)
-    
-    // update functions to build responsive part of rows
-    updateFlow(flow, '2018');
-    updateOutcomes(outcomes, '2018');
-    updateDemo(demo,'2018');
-    buildYearlyBar(yearlyData);
-    buildYearlyDistinctBar(yearlyData);
+    buildTable(outcomesData);
 
     // PH chart
     d3.select('container').html
@@ -232,10 +216,25 @@ function buildPage(flow, outcomes, demo, yearlyData){
         })
 
 }
+
+//function to build new table 
+function buildTable(outcomesData) {
+    var loop_data = outcomesData.yearly.average;
+    Object.keys(loop_data).forEach((item, index) => {
+        d3.select('#append-me').append('tr').html(`
+        <th scope="row">${item}</th>
+      <td>${loop_data[item]}</td>
+      <td>${outcomesData.yearly.percent_ph[item]}</td>
+        `);
+    }) 
+}
+
+
 // Function to build yearly flow bar chart
+
 function buildYearlyBar(yearlyData) {
     var years = yearlyData.years;
-    var data = [yearlyData.in, yearlyData.active, yearlyData.out]
+    // var data = [yearlyData.in, yearlyData.active, yearlyData.out]
 
     var chartOptions =  {
         chart: {
@@ -340,7 +339,6 @@ function buildYearlyBar(yearlyData) {
     Highcharts.chart('yearly-bar',chartOptions);
     
   }
-
 //   Build distinct count of clients bar chart
   function buildYearlyDistinctBar(yearlyData) {
     var years = yearlyData.years;
@@ -466,107 +464,7 @@ function buildYearlyBar(yearlyData) {
     Highcharts.chart('yearly-bar-distinct',chartOptions);
     
   }
-
-// function to update flow of in/out/exit row 
-// flow will be dictionary of all data needed for this row filtered to year
-function updateFlow(flow, year) {
-    // code for graphs 
-    // will just be changing the css class to "active"/"inactive" for yearly chart
-    var months = flow.months;
-    console.log(months);
-    // var chartOptions =  {
-    //     chart: {
-    //         type: 'column'
-    //     },
-    //     title: {
-    //         text: `${year} Program Participation by Month`
-    //     },
-    //     subtitle: {
-    //         text: 'For each month, we show the number of new enrollments in homeless service programs,\
-    //          ongoing enrollment, and enrollments that ended. Each enrollment is counted,\
-    //           so clients are included more than once if participating in more than one program'
-    //     },
-    //     xAxis: {
-    //         categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    //         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    //     ],
-    //         crosshair: true
-    //     },
-    //     credits: {
-    //         enabled: false
-    //     },
-    //     yAxis: {
-    //         min: 0,
-    //         softMax: 10000,
-    //         title: {
-    //             text: ''
-    //         }
-    //     },
-    //     tooltip: {
-    //         headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
-    //         pointFormat: '<tr><td style="color:"black";padding:0">{series.name}: </td>' + " " +
-    //             '<td style="padding:0; text-align: right"><b>{point.y}</b></td></tr>',
-    //         footerFormat: '</table>',
-    //         shared: true,
-    //         useHTML: true
-    //     },
-    //     plotOptions: {
-    //         column: {
-    //             pointPadding: 0.2,
-    //             borderWidth: 0
-    //         }
-    //     },
-    //     series: [{
-    //         name: 'Started',
-    //         data: []
-    
-    //     }, {
-    //         name: 'Ongoing',
-    //         data: []
-    
-    //     }, {
-    //         name: 'Ended',
-    //         data: []
-    
-    //     }]
-    // };
-    // months.forEach((month,index) => {
-    //     chartOptions.series[0].data.push(flow.in[index]);
-    //     chartOptions.series[1].data.push(flow.active[index]);
-    //     chartOptions.series[2].data.push(flow.out[index]);
-    //     // chartOptions.xAxis.categories.push(month);
-    // });
-
-    // Highcharts.chart('monthly-bar',chartOptions);
-    
-  
-
-    //code for cards
-    d3.select('#flow-row-card-header').html(`<h4> ${year} Top 5 Programs</h4>By Number of Enrollments`);
-    d3.select('#flow-card-list').html('');
-    flow.top5.forEach(item => {
-        
-        d3.select('#flow-card-list').append('p').attr('class','list-group-item').html(`<b>${item[0]}:</b> ${item[1]}`)
-    });
-}
-
-// function to update exit to PH row
-// ph is dictionary of filtered data for exit to ph row 
-function updateOutcomes(outcomes, year) {
-
-    // code for cards
-    d3.select('#outcome-row-card-header-percent').html
-        (`<h4>${year}</h4>`);
-        d3.select('#percent-ph-text').html(`<h1 class ='h1-card'> ${outcomes.percentPHyear}%</h1>
-        <p>Of program enrollees had permanent housing upon program exit</p>`);   
-        
-    d3.select('#outcome-row-card-header-avg').html
-        (`<h4>${year}</h4>`);
-        d3.select('#avg-ph-text').html(`<h1 class='h1-card'> ${outcomes.avgTimeToPH} days</h1>
-        <p>Average time from initial street outreach/shelter/transitional housing to permanent housing</p>`);     
-}
-
-function updateDemo(demo,year) {
+function updateDemo(demo,year, prog) {
 //Race tree map
     var racechartOptions = {
         // colorAxis: {
@@ -604,7 +502,7 @@ function updateDemo(demo,year) {
             }
         },
         subtitle: {
-            text: ''
+            text: `Program Type: ${prog}`
         },
         xAxis: {
             categories: [
@@ -633,7 +531,8 @@ function updateDemo(demo,year) {
         }
     };
 
-    var race = demo.race[0];
+    var race = Object.entries(demo.race).sort((a,b) => a[1] - b[1]);
+    
     race.reverse().forEach(item => {
         racechartOptions.series[0].data.push(item[1]);
         racechartOptions.xAxis.categories.push(item[0])
@@ -643,12 +542,10 @@ function updateDemo(demo,year) {
         // )
     });
 
-
-    
     Highcharts.chart('race', racechartOptions);
     
 // Gender hbar chart
-    var gender = demo.gender[0];
+    
     var chartOptions =  {
         tooltip: { 
             enabled: false 
@@ -677,7 +574,7 @@ function updateDemo(demo,year) {
         },
 
         subtitle: {
-            text: ''
+            text: `Program Type: ${prog}`
         },
         xAxis: {
             categories: [
@@ -716,127 +613,191 @@ function updateDemo(demo,year) {
     
         }]
     };
-    gender.reverse().forEach((item) => {
+    var gender = Object.entries(demo.sex).sort((a,b) => a[1] - b[1]);
+    gender.reverse().forEach(item => {
         chartOptions.series[0].data.push(item[1]);
-        chartOptions.xAxis.categories.push(item[0]);
-        // chartOptions.xAxis.categories.push(month);
+        chartOptions.xAxis.categories.push(item[0])
+        //     {name: item[0],
+        //     value: item[1],
+        //     colorValue: item[1]}
+        // )
     });
 
     Highcharts.chart('gender',chartOptions);
 
 // Age box plot 
-    var age = demo.age[0][0];
-    console.log('FIRST');
-    //have to convert data type 
-    age.forEach((item,index) => {
-        age[index] = parseFloat(item);
-    })
-    console.log(age);
-    var ageOptions = {
 
-        chart: {
-            type: 'boxplot'
-        },
-        credits: {
-            enabled: true
-        },
-    
-        title: {
-            text: `${year} Age`
-        },
-        exporting: {
-            buttons: {
-                contextButton: {
-                    menuItems: [
-                        'printChart',
-                        // 'separator',
-                        'downloadPNG',
-                        'downloadJPEG',
-                        'downloadPDF',
-                        'downloadSVG',
-                        'downloadCSV',
-                        'downloadXLS'
-                    ]
-                }
-            }
-        },
 
-        legend: {
-            enabled: false
-        },
-    
-        xAxis: {
-            categories: [`${year}`],
-            title: {
-                text: ''
-            }
-        },
-    
-        yAxis: {
-            title: {
-                text: 'Age  ',
-                rotation: 0,
-                // offset: 0,
-                // x: -50,
-                y: -15,
-                labels: {
-                    align: 'left',
-                }
-            },
-            max:100,
-            min: 0,
+ageOptions =  {
+    chart: {
+      type: 'column'
+    },
+    title: {
+      text: `${year} Age`
+    },
+    subtitle: {
+      text: `Program Type: ${prog}`
+    },
+    xAxis: {
+      categories: [
+      ],
+      crosshair: true
+    },
+    yAxis: {
+      min: 0,
+      title: {
+        text: ''
+      }
+    },
+    tooltip: {
+      headerFormat: '<span style="font-size:10px;color:{series.color};padding:0">Age: {point.key}</span><table>',
+      pointFormat: '<tr><td style="color:{series.color};padding:0">Number of Clients: </td>' +
+        '<td style="padding:0"><b>{point.y:.1f} mm</b></td></tr>',
+      footerFormat: '</table>',
+      shared: true,
+      useHTML: true
+    },
+    plotOptions: {
+      column: {
+        pointPadding: 0,
+        borderWidth: 0,
+        groupPadding: 0,
+        shadow: false
+      }
+    },
+    series: [{
+      name: 'Data',
+      data: []
+  
+    }]
+  };
 
-        },
-        plotOptions: {
-            boxplot: {
-                fillColor: '#91e8e1',
-                lineWidth: 1,
-                lineColor: '#2b908f',
-                medianColor: '#2b908f',
-                medianWidth: 3,
-                stemColor: '#2b908f',
-                stemDashStyle: 'dash',
-                stemWidth: 1,
-                whiskerColor: '#2b908f',
-                whiskerLength: '20%',
-                whiskerWidth: 3
-            }
-        },
-        series: [{
-            name: 'Age',
-            data: [
-                age
-            ],
-            tooltip: {
-                headerFormat: ''
-            }
-        }]
+  var age = Object.entries(demo.age).sort((a,b) => a[0] - b[0]);
+  age.forEach(item => {
+      ageOptions.series[0].data.push(item[1]);
+      ageOptions.xAxis.categories.push(item[0]);
     
-    };
+  });
 
-    Highcharts.chart('age',ageOptions);
+  Highcharts.chart('age',ageOptions);
+    // var age = demo.age[0][0];
+    // //have to convert data type 
+    // age.forEach((item,index) => {
+    //     age[index] = parseFloat(item);
+    // })
+    // var ageOptions = {
+
+    //     chart: {
+    //         type: 'boxplot'
+    //     },
+    //     credits: {
+    //         enabled: true
+    //     },
+    
+    //     title: {
+    //         text: `${year} Age`
+    //     },
+    //     exporting: {
+    //         buttons: {
+    //             contextButton: {
+    //                 menuItems: [
+    //                     'printChart',
+    //                     // 'separator',
+    //                     'downloadPNG',
+    //                     'downloadJPEG',
+    //                     'downloadPDF',
+    //                     'downloadSVG',
+    //                     'downloadCSV',
+    //                     'downloadXLS'
+    //                 ]
+    //             }
+    //         }
+    //     },
+
+    //     legend: {
+    //         enabled: false
+    //     },
+    
+    //     xAxis: {
+    //         categories: [`${year}`],
+    //         title: {
+    //             text: ''
+    //         }
+    //     },
+    
+    //     yAxis: {
+    //         title: {
+    //             text: 'Age  ',
+    //             rotation: 0,
+    //             // offset: 0,
+    //             // x: -50,
+    //             y: -15,
+    //             labels: {
+    //                 align: 'left',
+    //             }
+    //         },
+    //         max:100,
+    //         min: 0,
+
+    //     },
+    //     plotOptions: {
+    //         boxplot: {
+    //             fillColor: '#91e8e1',
+    //             lineWidth: 1,
+    //             lineColor: '#2b908f',
+    //             medianColor: '#2b908f',
+    //             medianWidth: 3,
+    //             stemColor: '#2b908f',
+    //             stemDashStyle: 'dash',
+    //             stemWidth: 1,
+    //             whiskerColor: '#2b908f',
+    //             whiskerLength: '20%',
+    //             whiskerWidth: 3
+    //         }
+    //     },
+    //     series: [{
+    //         name: 'Age',
+    //         data: [
+    //             age
+    //         ],
+    //         tooltip: {
+    //             headerFormat: ''
+    //         }
+    //     }]
+    
+    // };
+
+    // Highcharts.chart('age',ageOptions);
     // code for cards
 }
-
 // function attached to event listener in html for when the option 
-// in drop down box changes 
+// in drop down box changes for year selection in demo row 
 function optionChanged(value) {
-    d3.json(url, function(data) {
-        var flowData = data['flow'];
-        var outcomesData = data['outcomes']
-        var demoData = data['demo']
-        var filteredFlow = filterFlow(value,flowData);
-        var filteredOutcomes = filterOutcomes(value, outcomesData);
-        var filteredDemo = filterDemo(value, demoData);
-        console.log(value + ' Filtered Data for PH row: ', filteredOutcomes);
-        console.log(value + ' Filtered Data for in/out/exit row: ', filteredFlow);
-        console.log(value + ' Filtered Data for Demo row: ', filteredDemo);
-
-
-
-    updateFlow(filteredFlow, value);
-    updateOutcomes(filteredOutcomes, value);
-    updateDemo(filteredDemo, value);
+    var selected = document.getElementById('selDatasetDemo');
+    var demo = selected.options[selected.selectedIndex].value;
+    d3.json(demo_url+`${value}/`+`${demo}`, function(data) {
+        updateDemo(data, value, demo);
     });
 }
+// function attached to event listener in html for the option chaanges for 
+// selecting Progam Type on Program Volume Row
+function optionChangedVolume(value) {
+    d3.json(volume_url+`${value}`, function(data) {
+        var volume_data = unpackVolume(data);
+        buildYearlyBar(volume_data);
+        buildYearlyDistinctBar(volume_data);
+    });
+}
+
+function optionChangedDemo(value) {
+    var selected = document.getElementById('selDataset');
+    var year = selected.options[selected.selectedIndex].value;
+    if (year === 'Year') {
+        year = '2018'
+    }
+    d3.json(demo_url+`${year}/`+`${value}`, function(data) {
+        updateDemo(data, year, value);
+    });
+}
+
 
