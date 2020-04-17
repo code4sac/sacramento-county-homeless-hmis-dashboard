@@ -6,25 +6,24 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
-
-    <title>HMIS Dashboard</title>
+    <title>Sacramento Homeless Services</title>
 </head>
+
 <body>
 
     <div class="jumbotron text-center">
       <h1 class="jumbo-title"><strong>Sacramento Homeless Services Dashboard</strong></h1>
       <p></p>
-      <div class="row" id = 'intro'>
 
-      <div class = "col-md-12" id="intro"><p style = "
-        margin-left: 50px;
-        margin-right: 50px; text-align: left;">
+      <div class="row">
+
+        <div class = "col-md-12"><p id="intro">
         Homelessness poses a major challenge to Sacramento, California. In an effort to better understand the issue, 
         this dashboard was developed to help the community visualize the volume of homeless-related services, 
         how many people find permanent housing through these programs, and the demographics of those who use the services.
         The data comes from Sacramento's <strong style="color: #a6c96a"> Homeless Management Information System (HMIS)</strong>, 
         which is used by local homeless service providers within Sacramento County to coordinate care, 
-        manage their operations, and better serve those in need of homeless services (clients). 
+        manage their operations, and better serve those in need of homeless services (referred to in this dashboard as “clients”). 
         As of early 2020, the most recent public data is through August 2019.
         The raw data can be accessed at 
           <a href="https://github.com/code4sac/sacramento-county-homeless-hmis-data/tree/master/data">Code for Sacramento</a>.
@@ -35,29 +34,36 @@
             2019 <a href="https://sacramentostepsforward.org/2019pitcount/">(Source)</a>. In contrast, HMIS provides more granular data over time and specific to those who receive services. 
             Note that not all who are homeless are represented in the HMIS data below, as not all seek or receive services, 
             and some services are designed to prevent homelessness.
-      </p>
+        </p>
         </div> 
       </div>
     </div>
+
 <br>
+
       <div class="container-fluid">
 
         <div class ="container-fluid">
+
           <div class="row" id ="section-row">
             <h5 class="section-title"><strong>PROGRAM VOLUME</strong></h5>
           </div>
-          <div class = "col-md-2" id="dropdown-programs"> 
-            <div class="well">
+
+          <div class = "col-md-2" > 
+            <div class="well dropdown-programs">
               <h6>Select Program Type</h6>
             <select id="selDatasetVolume" onchange="optionChangedVolume(this.value)">
                 <option id="selected">All</option>
               </select>
             </div>
-            </div> 
-          <br>
+          </div> 
+
 
           <div class="row" id='flow'>
-              <div class="col-md-6"><div id="yearly-bar-distinct" style="margin: 0rem; padding: 0rem;"></div></div>
+              <div class="col-md-6 vert-space">
+                <div id="yearly-bar-distinct">
+                </div>
+              </div>
               
                <!-- <div class="col-md-2" id="flow-card"> 
                 <br>
@@ -83,7 +89,10 @@
                   <!-- <br> -->
               <!-- </div> -->
 
-            <div class="col-md-6" ><div id="yearly-bar" style="margin: 0rem; padding: 0rem;"></div></div>
+            <div class="col-md-6 vert-space" >
+              <div id="yearly-bar">  
+              </div>
+            </div>
           </div>
         </div>
  
@@ -91,20 +100,19 @@
           <div class="row" id="section-row">
             <h5 class="section-title"><strong>PARTICIPANT OUTCOMES</strong></h5>
           </div>
-          <br>
 
           <div class="row" id='ph'>
-            <div class="col-md-8" id="years-bar">
+            <div class="col-md-8 vert-space" id="years-bar">
               <div id = "container"></div>
             </div>
       <br>
-            <div class="col-md-4" id="percent-ph">
-              <table class="table">
+            <div class="col-md-4 vert-space" id="percent-ph">
+              <table class="table t-center">
                 <thead class="thead-dark">
                   <tr>
                     <th scope="col">Year</th>
-                    <th scope="col">Average Time To Permananet Housing</th>
-                    <th scope="col">Average % to Permananet Housing</th>
+                    <th scope="col">Average Days to Permanent Housing</th>
+                    <th scope="col">Average % Who Exit to Permanent Housing</th>
                   </tr>
                 </thead>
                 <tbody id="append-me">
@@ -130,12 +138,14 @@
         </div>
 
         <div class ="container-fluid">
+
           <div class="row" id ="section-row">
             <h5 class="section-title"><strong>PARTICIPANT DEMOGRAPHICS</strong></h5>
           </div>
-          <br>
-            <div class="row">
-          <div class = "col-md-2" id="dropdown"> 
+          
+          <div class="row">
+
+          <div class = "col-md-2 dropdown-programs2"> 
             <div class="well">
               <h6>Select year</h6>
             <select id="selDataset" onchange="optionChanged(this.value)">
@@ -143,7 +153,8 @@
               </select>
             </div>
             </div> 
-            <div class = "col-md-2" id="dropdown-programs"> 
+
+            <div class = "col-md-2 dropdown-programs2"> 
               <div class="well">
                 <h6>Select Program Type</h6>
               <select id="selDatasetDemo" onchange="optionChangedDemo(this.value)">
@@ -151,12 +162,12 @@
                 </select>
               </div>
               </div>
-            </div>
-<br>
+          </div>
+
             <div class="row" id='demo'>
-              <div class="col-md-4" id="race"></div>
-              <div class="col-md-4" id="gender"></div>
-              <div class="col-md-4" id="age"></div>
+              <div class="col-md-3 vert-space" id="race"></div>
+              <div class="col-md-3 vert-space" id="gender"></div>
+              <div class="col-md-6 vert-space" id="age"></div>
             </div>
         <br>
           </div>

@@ -633,7 +633,7 @@ ageOptions =  {
       type: 'column'
     },
     title: {
-      text: `${year} Age`
+      text: `${year} Age Distribution`
     },
     subtitle: {
       text: `Program Type: ${prog}`
@@ -641,7 +641,10 @@ ageOptions =  {
     xAxis: {
       categories: [
       ],
-      crosshair: true
+      crosshair: true,
+      title: {
+          text: 'Age'
+      }
     },
     yAxis: {
       min: 0,
@@ -649,10 +652,29 @@ ageOptions =  {
         text: ''
       }
     },
+    legend: {
+        enabled: false
+    },
+    exporting: {
+        buttons: {
+            contextButton: {
+                menuItems: [
+                    'printChart',
+                    // 'separator',
+                    'downloadPNG',
+                    'downloadJPEG',
+                    'downloadPDF',
+                    'downloadSVG',
+                    'downloadCSV',
+                    'downloadXLS'
+                ]
+            }
+        }
+    },
     tooltip: {
-      headerFormat: '<span style="font-size:10px;color:{series.color};padding:0">Age: {point.key}</span><table>',
+      headerFormat: '<span style="color:{series.color};padding:0">Age: {point.key}</span><table>',
       pointFormat: '<tr><td style="color:{series.color};padding:0">Number of Clients: </td>' +
-        '<td style="padding:0"><b>{point.y:.1f} mm</b></td></tr>',
+        '<td style="padding:0"><b>{point.y} </td></tr>',
       footerFormat: '</table>',
       shared: true,
       useHTML: true
