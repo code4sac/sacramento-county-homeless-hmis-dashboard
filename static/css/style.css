@@ -96,9 +96,9 @@
       padding-left: 5 px;
   }
 
-#selDataset {
+/* #selDataset {
       font-size: 25px;
-  }
+  } */
 
 .h1-card {
   padding-top: 10px;
@@ -158,6 +158,39 @@ padding: 0px;
 #dropdown {
   padding-right: 25px;
   padding-right: 0px;
+}
+
+.dropdown-programs {
+  margin-top: 10px;
+}
+
+.dropdown-programs2 {
+  margin-top: 10px;
+  margin-left: 10px;
+}
+
+.vert-space {
+  margin-top: 15px;
+}
+
+.t-center {
+  text-align: center;
+}
+
+#yearly-bar-distinct  {
+  margin: 0rem; 
+  padding: 0rem;
+}
+
+#yearly-bar {
+  margin: 0rem; 
+  padding: 0rem;
+}
+
+#intro {
+  margin-left: 50px;
+  margin-right: 50px; 
+  text-align: left;
 }
 
 /* highcharts base colors for reference */
