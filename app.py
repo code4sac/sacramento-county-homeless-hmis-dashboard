@@ -8,13 +8,13 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 
-load_dotenv(r'HMIS\local.env')
+load_dotenv()
 
 app = Flask(__name__)
 # CORS(app)
 
 
-url = os.environ['DATABASE_URL_TESTING']
+url = os.environ['DATABASE_URL']
 
 conn = psycopg2.connect(url)
 
@@ -28,6 +28,8 @@ def home():
 #volume route
 @app.route('/api/volume/<project_type>')
 def get_volume_date(project_type):
+    if ("'" in project_type) or (";" in project_type):
+        return jsonify({'Message':'Table Dropped'})
     response = {'in':{},
                 'in_dist':{},
                 'out':{},
@@ -75,6 +77,10 @@ def get_outcomes_data():
 
 @app.route('/api/demo/<year>/<project_type>')
 def get_demo_data(year, project_type):
+    if ("'" in project_type) or (";" in project_type):
+        return jsonify({'Message':'Table Dropped'})
+    if ("'" in year) or (";" in year):
+        return jsonify({'Message':'Table Dropped'})
     response = {'age':{},
                     'race':{},
                     'sex':{}}
