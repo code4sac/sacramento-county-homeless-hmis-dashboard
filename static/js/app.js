@@ -37,16 +37,15 @@ function unpackVolume(data){
 fetch(outcomes_url).then(response => {
     return response.json();
 }).then( data => {
-    // console.log('Full Data: ', data);
-    // console.log(data);
+    dataRaw = data
     dataFormat = unpackOutcomes(data);
+    console.log(dataRaw[0][0]);
+    console.log(dataFormat)
     buildOutcomes(dataFormat);
 });
 fetch(demo_url+"2018/"+"All").then(response => {
     return response.json();
 }).then( data => {
-    // console.log('Full Data: ', data);
-    // console.log(data);
     updateDemo(data, '2018','All');
 });
 
@@ -69,22 +68,8 @@ function unpackOutcomes(response) {
         return_data.yearly.average[yearly[i][2]] = yearly[i][0]
         return_data.yearly.percent_ph[yearly[i][2]] = yearly[i][1]
     };
-    // response[0].forEach(item => {
-        
-    //     return_data.monthly.exit_ph[item[1]] = item[2]
-    //     return_data.monthly.exit_all[item[1]] = item[0]
-    //     return_data.monthly.percent_ph[item[1]] = item[3]
-    // });
-    // response[1].forEach(item => {
-    //     return_data.yearly.average[item[2]] = item[0]
-    //     return_data.yearly.percent_ph[item[2]] = item[1]
-    // });
-    // console.log(return_data);
     return return_data
 }
-
-
-
 
 function buildOutcomes(outcomesData) {
     var monthlyOutcomesgraph = {};
@@ -103,119 +88,206 @@ function buildOutcomes(outcomesData) {
 
     // PH chart
     d3.select('container').html
-    phChart = Highcharts.chart('container', {
-        // chart: {
-        //     type: 'bar'
-        // },
-        exporting: {
-            buttons: {
-                contextButton: {
-                    menuItems: [
-                        'printChart',
-                        // 'separator',
-                        'downloadPNG',
-                        'downloadJPEG',
-                        'downloadPDF',
-                        'downloadSVG',
-                        'downloadCSV',
-                        'downloadXLS'
-                    ]
-                }
-            }
-        },
-
-        title: {
-            text: 'Program enrollees with permanent housing upon program exit'
-        },
-        subtitle: {
-            text: 'For all participants who leave a program,\
-             the percent who exited to permanent housing is shown. Participants are counted once.'
-        },
-        // Turn off Highcharts.com label/link 
-        credits: {
-            enabled: true
-        },
-        xAxis: {
-            categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-        },
-        yAxis: {
-            min: 0,
+    let chartOptions =  {
+            chart: {
+                zoomType: 'xy'
+            },
             title: {
-                text: ''
+                text: 'Clients Who Found Permanent Housing'
             },
-            labels: {
-                format: '{value}%',
-            }
-        },
-        series: [{
-            name: '2015',
-            // data: [
-            //     // if want to add N per period as well format as:
-            //     // {y: series data,
-            //     // myData: outside data}
-            // ]
-        }, 
-        {
-            name: '2016',
-            // data: []
-        },
-        {
-            name: '2017',
-            // data: []
-        },    {
-            name: '2018',
-            // data: []
-        },    {
-            name: '2019',
-            // data: []
-        },
-        ],
-        // Moves location of series names to be as close as possible to line
-        legend: {
-            layout: 'proximate',
-            align: 'right'
-        },
-        tooltip: {
-            // shared: true, //makes all data for that time point visible
-            useHTML: true, //allows for more custom and complicated tooltip design
-            // headerFormat: '{point.key}<table>',
-            // pointFormat: '<tr><td style="color: {series.color}">{series.name}: </td>' +
-            //     '<td style="text-align: right"><b>{point.y} EUR</b></td></tr>',
-            // footerFormat: '</table>',
-            // valueDecimals: 2
-            formatter: function () {
-                return this.x + " " +this.series.name + ": <b>" + this.y
-                +"%</b><br> " + this.point.myData2 + " out of " + this.point.myData 
-            + "<br>Exited to permanent housing";
-            }
+            subtitle: {
+                text: 'For clients no longer enrolled in any programs, this chart shows\
+                the number and percent who had found permanent housing when their programs ended. Each client is only counted once.'
             },
-            });
-        let years = []
-        let keys = Object.keys(monthlyOutcomesgraph);
-        years.push(keys)
-            
-        let phSeries = []
-            years[0].forEach(year =>{ 
-            var toPush = []
-            monthlyOutcomesgraph[year].percentPHmo.forEach((item, index) => {
-               toPush.push({'y':item, 'myData':monthlyOutcomesgraph[year].exitAll[index],
-                'myData2':monthlyOutcomesgraph[year].exitPH[index]})
-            });
-            phSeries.push(toPush);
-            });
-        // Limit predicted monthly values 
-        phSeries[4].length = 8;
+            exporting: {
+                buttons: {
+                    contextButton: {
+                        menuItems: [
+                            'printChart',
+                            // 'separator',
+                            'downloadPNG',
+                            'downloadJPEG',
+                            'downloadPDF',
+                            'downloadSVG',
+                            'downloadCSV',
+                            'downloadXLS'
+                        ]
+                    }
+                }
+            },
+            xAxis: [{
+                categories: [],
+                crosshair: true,
+                tickInterval: 12,
+                tickWidth: 3,
+            }],
+            yAxis: [{ // Primary yAxis
+                min: 0,
+                labels: {
+                    format: '{value}%',
+                },
+                title: {
+                    align: 'high',
+                    text: 'Percent',
+                    offset: 0,
+                    rotation: 0,
+                    y: -20
+                },
+                opposite: true
 
-    phChart.series.forEach(year => { 
-        let index = year.index
+            }, { // Secondary yAxis
+                // min: 0,                
+                title: {
+                    text: 'Number',
+                    align: 'high',
+                    offset: 0,
+                    rotation: 0,
+                    y: -20
+                },
+                labels: {
+                    format: '{value}',
+                },
+            }],
+            tooltip: {
+                shared: true,
+            },
+            legend: {
+                align: 'center',
+                verticalAlign: 'top',
+                floating: false,
+                backgroundColor:
+                    Highcharts.defaultOptions.legend.backgroundColor || // theme
+                    'rgba(255,255,255,0.25)'
+            },
+            series: [
+                {
+                name: 'Number',
+                type: 'column',
+                yAxis: 1,
+                data: [],
+                tooltip: {
+                    valueSuffix: ''
+                }
+            }, 
+            {
+                name: 'Percent',
+                type: 'spline',
+                marker: {
+                    enabled: false
+                },
+                data: [],
+                tooltip: {
+                    valueSuffix: '%'
+                }
+            }]
+        };
 
-        year.update({
-        data: phSeries[index]
-        }, true)
+        let monthlyPHpercent = Object.entries(outcomesData.monthly.percent_ph);
+        monthlyPHpercent.forEach(item=> {
+            chartOptions.series[1].data.push(item[1]);
+            chartOptions.xAxis[0].categories.push(item[0]);
         })
 
-}
+        let monthlyNum = Object.entries(outcomesData.monthly.exit_ph);
+        monthlyNum.forEach(item=> {
+            chartOptions.series[0].data.push(item[1]);
+        })
+
+        Highcharts.chart('container',chartOptions)
+    }
+
+    // ALTERNATIVE OUTCOMES CHART PRESENTION - MONTHLY WITH EACH YEAR A SEPARATE LINE   
+        // title: {
+        //     text: 'Program enrollees with permanent housing upon program exit'
+        // },
+        // subtitle: {
+        //     text: 'For all participants who leave a program,\
+        //      the percent who exited to permanent housing is shown. Participants are counted once.'
+        // },
+        // Turn off Highcharts.com label/link 
+        // credits: {
+        //     enabled: true
+        // },
+        // xAxis: {
+        //     categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        //                 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        // },
+        // yAxis: {
+        //     min: 0,
+        //     title: {
+        //         text: ''
+        //     },
+        //     labels: {
+        //         format: '{value}%',
+        //     }
+        // },
+        // series: [{
+        //     name: '2015',
+        //     // data: [
+        //     //     // if want to add N per period as well format as:
+        //     //     // {y: series data,
+        //     //     // myData: outside data}
+        //     // ]
+        // }, 
+        // {
+        //     name: '2016',
+        //     // data: []
+        // },
+        // {
+        //     name: '2017',
+        //     // data: []
+        // },    {
+        //     name: '2018',
+        //     // data: []
+        // },    {
+        //     name: '2019',
+        //     // data: []
+        // },
+        // ],
+        // Moves location of series names to be as close as possible to line
+        // legend: {
+        //     layout: 'proximate',
+        //     align: 'right'
+        // },
+        // tooltip: {
+        //     // shared: true, //makes all data for that time point visible
+        //     useHTML: true, //allows for more custom and complicated tooltip design
+        //     // headerFormat: '{point.key}<table>',
+        //     // pointFormat: '<tr><td style="color: {series.color}">{series.name}: </td>' +
+        //     //     '<td style="text-align: right"><b>{point.y} EUR</b></td></tr>',
+        //     // footerFormat: '</table>',
+        //     // valueDecimals: 2
+        //     formatter: function () {
+        //         return this.x + " " +this.series.name + ": <b>" + this.y
+        //         +"%</b><br> " + this.point.myData2 + " out of " + this.point.myData 
+        //     + "<br>Exited to permanent housing";
+        //     }
+        //     },
+        //     });
+
+    //     let years = []
+    //     let keys = Object.keys(monthlyOutcomesgraph);
+    //     years.push(keys)
+            
+    //     let phSeries = []
+    //         years[0].forEach(year =>{ 
+    //         var toPush = []
+    //         monthlyOutcomesgraph[year].percentPHmo.forEach((item, index) => {
+    //            toPush.push({'y':item, 'myData':monthlyOutcomesgraph[year].exitAll[index],
+    //             'myData2':monthlyOutcomesgraph[year].exitPH[index]})
+    //         });
+    //         phSeries.push(toPush);
+    //         });
+    //     // Limit predicted monthly values 
+    //     phSeries[4].length = 8;
+
+    // phChart.series.forEach(year => { 
+    //     let index = year.index
+
+    //     year.update({
+    //     data: phSeries[index]
+    //     }, true)
+    //     })
 
 //function to build new table 
 function buildTable(outcomesData) {
@@ -248,7 +320,7 @@ var scaleDict = {
     },
     "Permanent Housing":{
         'min':0,
-        'max':5000
+        'max':3000
     },
     "Emergency Shelter":{
         'min':0,
@@ -256,7 +328,7 @@ var scaleDict = {
     },
     "Rapid Re-Housing":{
         'min':0,
-        'max':6500
+        'max':6000
     },
     "Street Outreach":{
         'min':0,
@@ -264,11 +336,11 @@ var scaleDict = {
     },
     "Transitional Housing":{
         'min':0,
-        'max':5000
+        'max':3000
     },
     "Other":{
         'min':0,
-        'max':5000
+        'max':3000
     }
 };
 
@@ -302,7 +374,7 @@ function buildYearlyBar(yearlyData, filterValue) {
             text: 'Program Participation by Year'
         },
         subtitle: {
-            text: 'This chart shows the total homeless services program enrollments each year, and of those, the number of new enrollments during the year and the number of enrollments that ended that year. Clients are included more than once if participating in more than one program.'
+            text: 'This chart shows the total homeless services program enrollments each year and, of those, the number of new enrollments during the year and the number of enrollments that ended that year. Clients are included more than once if participating in more than one program.'
         },
         colors: ["#434348", "#7cb5ec", "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
 
@@ -352,12 +424,11 @@ function buildYearlyBar(yearlyData, filterValue) {
         }],
         annotations: [{
             labels: [{
+                // located in top right of chart regardless of filter rescaling
                 point: {
                     x: 4,
-                    y: 18800,
+                    y: 20,
                     xAxis: 0,
-                    yAxis: 0,
-
             },
             style: {
                 fontSize: '9px'            
@@ -380,6 +451,7 @@ function buildYearlyBar(yearlyData, filterValue) {
     Highcharts.chart('yearly-bar',chartOptions);
     
   }
+
 //   Build distinct count of clients bar chart
 function buildYearlyDistinctBar(yearlyData, filterValue) {
     var years = yearlyData.years;
@@ -410,23 +482,8 @@ function buildYearlyDistinctBar(yearlyData, filterValue) {
             text: 'Distinct Count of Clients'
         },
         subtitle: {
-            text: 'This chart shows the total number of people who received homeless services by year, and of those, the number who started receiving services that year and the number who ended services that year. Each client is counted only once.'
+            text: 'This chart shows the total number of people who received homeless services by year and, of those, the number who started receiving services that year and the number who ended services that year. Each client is counted only once.'
         },
-        // annotations: [{
-        //     labels: [{
-        //         point: {
-        //             // xAxis: 0,
-        //             // yAxis: 0,
-        //             // x:300,
-        //             // y:50,
-
-        //         },
-        //         text: 'Projected'
-            // }],
-        //     labelOptions: {
-        //         x: 10, y: -10
-        //     }
-        // }],
         xAxis: {
             categories: [
                 
@@ -477,12 +534,11 @@ function buildYearlyDistinctBar(yearlyData, filterValue) {
         colors: ["#434348","#7cb5ec",  "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
         annotations: [{
             labels: [{
+                // located in top right of chart regardless of filter rescaling
                 point: {
                     x: 4,
-                    y: 11550,
+                    y: 20,
                     xAxis: 0,
-                    yAxis: 0,
-            
             },
             style: {
                 // color: 'rgba(210, 215, 211, 1)',
@@ -506,12 +562,8 @@ function buildYearlyDistinctBar(yearlyData, filterValue) {
     
   }
 function updateDemo(demo,year, prog) {
-//Race tree map
+//Race 
     var racechartOptions = {
-        // colorAxis: {
-        //     minColor: '#ffffff',
-        //     maxColor: '#f28f43'
-        // },
         tooltip: { 
             enabled: false 
         },
@@ -563,8 +615,6 @@ function updateDemo(demo,year, prog) {
         //     enabled: false
         // },
         series: [{
-            // type: 'treemap',
-            // layoutAlgorithm: 'sliceAndDice',
             data: []
         }],
         title: {
@@ -577,10 +627,6 @@ function updateDemo(demo,year, prog) {
     race.reverse().forEach(item => {
         racechartOptions.series[0].data.push(item[1]);
         racechartOptions.xAxis.categories.push(item[0])
-        //     {name: item[0],
-        //     value: item[1],
-        //     colorValue: item[1]}
-        // )
     });
 
     Highcharts.chart('race', racechartOptions);
@@ -666,7 +712,7 @@ function updateDemo(demo,year, prog) {
 
     Highcharts.chart('gender',chartOptions);
 
-// Age box plot 
+// Age plot
 
 
 ageOptions =  {

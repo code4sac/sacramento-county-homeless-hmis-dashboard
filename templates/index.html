@@ -18,12 +18,12 @@
       <div class="row">
 
         <div class = "col-md-12"><p id="intro">
-        Homelessness poses a major challenge to Sacramento, California. In an effort to better understand the issue, 
-        this dashboard was developed to help the community visualize the volume of homeless-related services, 
+        Homelessness poses a major challenge to Sacramento, California.  
+        This dashboard was developed to help the community visualize the volume of homeless-related services, 
         how many people find permanent housing through these programs, and the demographics of those who use the services.
         The data comes from Sacramento's <strong style="color: #a6c96a"> Homeless Management Information System (HMIS)</strong>, 
         which is used by local homeless service providers within Sacramento County to coordinate care, 
-        manage their operations, and better serve those in need of homeless services (referred to in this dashboard as “clients”). 
+        manage their operations, and better serve those in need of homeless services (referred to in this dashboard as <i>clients</i>). 
         As of early 2020, the most recent public data is through August 2019.
         The raw data can be accessed at 
           <a href="https://github.com/code4sac/sacramento-county-homeless-hmis-data/tree/master/data">Code for Sacramento</a>.
@@ -49,6 +49,7 @@
             <h5 class="section-title"><strong>PROGRAM VOLUME</strong></h5>
           </div>
 
+          <div class="row">
           <div class = "col-md-2" > 
             <div class="well dropdown-programs">
               <h6>Select Program Type</h6>
@@ -57,7 +58,7 @@
               </select>
             </div>
           </div> 
-
+          </div>
 
           <div class="row" id='flow'>
               <div class="col-md-6 vert-space">
@@ -110,14 +111,16 @@
               <table class="table t-center">
                 <thead class="thead-dark">
                   <tr>
-                    <th scope="col">Year</th>
-                    <th scope="col">Average Days to Permanent Housing</th>
-                    <th scope="col">Average % Who Exit to Permanent Housing</th>
+                    <th width="16%" scope="col">Year</th>
+                    <th width="42%" scope="col">Average Days to Permanent Housing</th>
+                    <th width="42%" scope="col">Average % Who Exit to Permanent Housing</th>
                   </tr>
                 </thead>
                 <tbody id="append-me">
                 </tbody>
               </table>
+              <p style="margin-left: 2em; font-size: .8rem; font-style: italic;"> * Cannot calculate 2019 average days accurately due to incomplete data</p>
+
               
               <!-- <div class="card" id="middle-card">
                 <div class="card-header" id="outcome-row-card-header-percent">BOo
