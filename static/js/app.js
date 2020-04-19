@@ -18,8 +18,8 @@ fetch(volume_url+"All").then( response => {
         d3.select('#selDataset').append("option").text(item).attr("value", String(item))
     });
     var volume_data = unpackVolume(data);
-    buildYearlyBar(volume_data);
-    buildYearlyDistinctBar(volume_data);
+    buildYearlyBar(volume_data, "All");
+    buildYearlyDistinctBar(volume_data, "All");
 });
 
 function unpackVolume(data){
@@ -79,7 +79,7 @@ function unpackOutcomes(response) {
     //     return_data.yearly.average[item[2]] = item[0]
     //     return_data.yearly.percent_ph[item[2]] = item[1]
     // });
-    console.log(return_data);
+    // console.log(return_data);
     return return_data
 }
 
@@ -221,18 +221,59 @@ function buildOutcomes(outcomesData) {
 function buildTable(outcomesData) {
     var loop_data = outcomesData.yearly.average;
     Object.keys(loop_data).forEach((item, index) => {
+        if (String(item) === "2019") {
         d3.select('#append-me').append('tr').html(`
         <th scope="row">${item}</th>
-      <td>${loop_data[item]}</td>
+      <td>*</td>
       <td>${outcomesData.yearly.percent_ph[item]}</td>
-        `);
-    }) 
+        `
+        );
+        }
+        else {
+            d3.select('#append-me').append('tr').html(`
+            <th scope="row">${item}</th>
+          <td>${loop_data[item]}</td>
+          <td>${outcomesData.yearly.percent_ph[item]}</td>
+            `);
+        }
+    }); 
 }
 
 
 // Function to build yearly flow bar chart
+var scaleDict = {
+    "All":{
+        'min':0,
+        'max':21000
+    },
+    "Permanent Housing":{
+        'min':0,
+        'max':5000
+    },
+    "Emergency Shelter":{
+        'min':0,
+        'max':6000
+    },
+    "Rapid Re-Housing":{
+        'min':0,
+        'max':6500
+    },
+    "Street Outreach":{
+        'min':0,
+        'max':6000
+    },
+    "Transitional Housing":{
+        'min':0,
+        'max':5000
+    },
+    "Other":{
+        'min':0,
+        'max':5000
+    }
+};
 
-function buildYearlyBar(yearlyData) {
+
+function buildYearlyBar(yearlyData, filterValue) {
     var years = yearlyData.years;
     // var data = [yearlyData.in, yearlyData.active, yearlyData.out]
 
@@ -272,8 +313,8 @@ function buildYearlyBar(yearlyData) {
             crosshair: true
         },
         yAxis: {
-            min: 0,
-            max: 21000,
+            min: scaleDict[`${filterValue}`].min,
+            max: scaleDict[`${filterValue}`].max,
             endOnTick: false,
             title: {
                 text: '',
@@ -340,9 +381,9 @@ function buildYearlyBar(yearlyData) {
     
   }
 //   Build distinct count of clients bar chart
-  function buildYearlyDistinctBar(yearlyData) {
+function buildYearlyDistinctBar(yearlyData, filterValue) {
     var years = yearlyData.years;
-    var data = [yearlyData.distinct_in, yearlyData.distinct_active, yearlyData.distinct_out]
+    // var data = [yearlyData.distinct_in, yearlyData.distinct_active, yearlyData.distinct_out]
 
     var chartOptions =  {
         chart: {
@@ -393,8 +434,8 @@ function buildYearlyBar(yearlyData) {
             crosshair: true
         },
         yAxis: {
-            min: 0,
-            max: 21000,
+            min: scaleDict[`${filterValue}`].min,
+            max: scaleDict[`${filterValue}`].max,
             endOnTick: false,
             title: {
                 text: '',
@@ -702,95 +743,6 @@ ageOptions =  {
   });
 
   Highcharts.chart('age',ageOptions);
-    // var age = demo.age[0][0];
-    // //have to convert data type 
-    // age.forEach((item,index) => {
-    //     age[index] = parseFloat(item);
-    // })
-    // var ageOptions = {
-
-    //     chart: {
-    //         type: 'boxplot'
-    //     },
-    //     credits: {
-    //         enabled: true
-    //     },
-    
-    //     title: {
-    //         text: `${year} Age`
-    //     },
-    //     exporting: {
-    //         buttons: {
-    //             contextButton: {
-    //                 menuItems: [
-    //                     'printChart',
-    //                     // 'separator',
-    //                     'downloadPNG',
-    //                     'downloadJPEG',
-    //                     'downloadPDF',
-    //                     'downloadSVG',
-    //                     'downloadCSV',
-    //                     'downloadXLS'
-    //                 ]
-    //             }
-    //         }
-    //     },
-
-    //     legend: {
-    //         enabled: false
-    //     },
-    
-    //     xAxis: {
-    //         categories: [`${year}`],
-    //         title: {
-    //             text: ''
-    //         }
-    //     },
-    
-    //     yAxis: {
-    //         title: {
-    //             text: 'Age  ',
-    //             rotation: 0,
-    //             // offset: 0,
-    //             // x: -50,
-    //             y: -15,
-    //             labels: {
-    //                 align: 'left',
-    //             }
-    //         },
-    //         max:100,
-    //         min: 0,
-
-    //     },
-    //     plotOptions: {
-    //         boxplot: {
-    //             fillColor: '#91e8e1',
-    //             lineWidth: 1,
-    //             lineColor: '#2b908f',
-    //             medianColor: '#2b908f',
-    //             medianWidth: 3,
-    //             stemColor: '#2b908f',
-    //             stemDashStyle: 'dash',
-    //             stemWidth: 1,
-    //             whiskerColor: '#2b908f',
-    //             whiskerLength: '20%',
-    //             whiskerWidth: 3
-    //         }
-    //     },
-    //     series: [{
-    //         name: 'Age',
-    //         data: [
-    //             age
-    //         ],
-    //         tooltip: {
-    //             headerFormat: ''
-    //         }
-    //     }]
-    
-    // };
-
-    // Highcharts.chart('age',ageOptions);
-    // code for cards
 }
 // function attached to event listener in html for when the option 
 // in drop down box changes for year selection in demo row 
@@ -806,8 +758,8 @@ function optionChanged(value) {
 function optionChangedVolume(value) {
     d3.json(volume_url+`${value}`, function(data) {
         var volume_data = unpackVolume(data);
-        buildYearlyBar(volume_data);
-        buildYearlyDistinctBar(volume_data);
+        buildYearlyBar(volume_data, value);
+        buildYearlyDistinctBar(volume_data, value);
     });
 }
 

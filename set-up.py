@@ -3,7 +3,9 @@ import subprocess
 import sys
 
 
-### FOLLOWING STUFF NEEDS TO BE UNCOMMENTED FOR OPEN SOURCE COLAB
+### FOLLOWING LINES WILL INSTALL NEEDED PACKAGES ONTO YOUR COMPUTER
+### THEN REST OF CODE WILL RUN AND SET UP YOUR LOCAL POSTGRES DATABASE
+### THE DB CONNECTION STRING SHOULD BE MADE IN YOUR LOCAL ".env" FILE 
 
 # def install_package(package):
 #     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
@@ -22,12 +24,11 @@ import pandas as pd
 import numpy as np
 
 
-### FOLLOWING LINE NEEDS TO BE CHANGED ONCE READY TO TURN LIVE SITE ON 
-#load_dotenv() is what it will be
 
-load_dotenv(r'HMIS/local.env')
 
-database_url = os.environ['DATABASE_URL_TESTING']
+load_dotenv()
+
+database_url = os.environ['DATABASE_URL']
 
 engine = create_engine(database_url)
 
