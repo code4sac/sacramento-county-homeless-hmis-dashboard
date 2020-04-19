@@ -1,7 +1,7 @@
 # Flask app for HMIS dashboard
 
 from flask import Flask, jsonify, render_template
-# from flask_cors import CORS 
+
 
 import psycopg2
 import pandas as pd
@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-# CORS(app)
+
 
 
 url = os.environ['DATABASE_URL']
@@ -84,7 +84,61 @@ def get_demo_data(year, project_type):
     response = {'age':{},
                     'race':{},
                     'sex':{}}
-    if project_type == 'All':
+    if (year == "All") and (project_type != "All"):
+        with conn.cursor() as c:
+            c.execute('''
+            select "Project_Type", "Age", sum("Num_Clients")
+            from age_prog
+            where "Project_Type" like '%{}%'
+            group by "Project_Type","Age"
+            '''.format(project_type))
+            rs = c.fetchall()
+            for r in rs:
+                response['age'][r[1]] = int(r[2])
+            c.execute('''
+            select "Project_Type", "Race", sum("num_people_enroll")
+            from yearly_race
+            where "Project_Type" like '%{}%'
+            group by "Project_Type","Race"
+            '''.format(project_type))
+            rs = c.fetchall()
+            for r in rs:
+                response['race'][r[1]] = int(r[2])
+            c.execute('''
+            select "Project_Type", "Gender", sum("num_people_enroll")
+            from yearly_gender
+            where "Project_Type" like '%{}%'
+            group by "Project_Type","Gender"
+            '''.format(project_type))
+            rs = c.fetchall()
+            for r in rs:
+                response['sex'][r[1]] = int(r[2])
+
+    if (year == "All") and (project_type == "All"):
+        with conn.cursor() as c:
+            c.execute('''
+            select "Age", sum("Num_Clients") from age_no_prog
+            group by "Age"
+            ''')
+            rs = c.fetchall()
+            for r in rs:
+                response['age'][r[0]] = int(r[1])
+            c.execute('''
+            select "Race",sum("num_people_enroll") from race_no_prog
+            group by "Race"
+            ''')
+            rs = c.fetchall()
+            for r in rs:
+                response['race'][r[0]] = int(r[1])
+            c.execute('''
+            select "Gender",sum("num_people_enroll") from gender_no_prog
+            group by "Gender"
+            ''')
+            rs = c.fetchall()
+            for r in rs:
+                response['sex'][r[0]] = int(r[1])
+
+    if (project_type == 'All') and (year != "All"):
         with conn.cursor() as c:
             c.execute('''SELECT * FROM age_no_prog where "Date" = '{}' '''.format(year))
             rs = c.fetchall()
@@ -98,7 +152,7 @@ def get_demo_data(year, project_type):
             rs = c.fetchall()
             for r in rs:
                 response['race'][r[1]] = r[2]
-    
+
     else:
         with conn.cursor() as c:
             c.execute('''SELECT * FROM age_prog where "Date" = '{}' and "Project_Type" = '{}' '''.format(year, project_type))
