@@ -43,10 +43,10 @@ fetch(outcomes_url).then(response => {
     console.log(dataFormat)
     buildOutcomes(dataFormat);
 });
-fetch(demo_url+"2018/"+"All").then(response => {
+fetch(demo_url+"All/"+"All").then(response => {
     return response.json();
 }).then( data => {
-    updateDemo(data, '2018','All');
+    updateDemo(data, 'All','All');
 });
 
 function unpackOutcomes(response) {
@@ -595,7 +595,8 @@ function updateDemo(demo,year, prog) {
             }
         },
         subtitle: {
-            text: `Program Type: ${prog}`
+            text: `Program Type: <b>${prog}</b> | Year: <b>${year}</b>`,
+            useHTML:true
         },
         xAxis: {
             categories: [
@@ -618,7 +619,7 @@ function updateDemo(demo,year, prog) {
             data: []
         }],
         title: {
-            text: `${year} Race`
+            text: `Race`
         }
     };
 
@@ -641,7 +642,7 @@ function updateDemo(demo,year, prog) {
             type: 'bar'
         },
         title: {
-            text: `${year} Gender`
+            text: `Gender`
         },
         exporting: {
             buttons: {
@@ -661,7 +662,8 @@ function updateDemo(demo,year, prog) {
         },
 
         subtitle: {
-            text: `Program Type: ${prog}`
+            text: `Program Type: <b>${prog}</b> | Year: <b>${year}</b>`,
+         useHTML:true
         },
         xAxis: {
             categories: [
@@ -720,10 +722,11 @@ ageOptions =  {
       type: 'column'
     },
     title: {
-      text: `${year} Age Distribution`
+      text: `Age Distribution`
     },
     subtitle: {
-      text: `Program Type: ${prog}`
+      text: `Program Type: <b>${prog}</b> | Year: <b>${year}</b>`,
+      useHTML:true
     },
     xAxis: {
       categories: [
