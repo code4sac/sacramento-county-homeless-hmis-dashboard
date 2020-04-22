@@ -90,10 +90,11 @@ function buildOutcomes(outcomesData) {
     d3.select('container').html
     let chartOptions =  {
             chart: {
-                zoomType: 'xy'
+                zoomType: 'x'
             },
             title: {
-                text: 'Clients Who Found Permanent Housing'
+                text: 'Clients Who Found Permanent Housing',
+                margin: 50
             },
             subtitle: {
                 text: 'For clients no longer enrolled in any programs, this chart shows\
@@ -120,38 +121,57 @@ function buildOutcomes(outcomesData) {
                 crosshair: true,
                 tickInterval: 12,
                 tickWidth: 3,
+                labels: {
+                    align: 'left',
+                    formatter: function () {
+                        return this.value.split('-',1);
+                    }
+                }
             }],
             yAxis: [{ // Primary yAxis
                 min: 0,
                 labels: {
                     format: '{value}%',
+                    style: {
+                        color: 'black'
+                    }
                 },
                 title: {
                     align: 'high',
-                    text: 'Percent',
+                    text: 'Percent (line)',
                     offset: 0,
                     rotation: 0,
-                    y: -20
+                    y: -20,
+                    style: {
+                        color: 'black'
+                    }
                 },
                 opposite: true
 
             }, { // Secondary yAxis
                 // min: 0,                
                 title: {
-                    text: 'Number',
+                    text: 'Number (bars)',
                     align: 'high',
                     offset: 0,
                     rotation: 0,
-                    y: -20
+                    y: -20,
+                    style: {
+                        color: '#2f7ed8'
+                    }
                 },
                 labels: {
                     format: '{value}',
+                    style: {
+                        color: '#2f7ed8'
+                    }
                 },
             }],
             tooltip: {
                 shared: true,
             },
             legend: {
+                enabled: false,
                 align: 'center',
                 verticalAlign: 'top',
                 floating: false,
