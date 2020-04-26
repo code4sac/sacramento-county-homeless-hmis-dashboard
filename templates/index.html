@@ -50,14 +50,21 @@
           </div>
 
           <div class="row">
-          <div class = "col-md-2" > 
-            <div class="well dropdown-programs">
+          <div class = "col-md-3"> 
+            <div class="dropdown-programs select">
               <h6>Select Program Type</h6>
-            <select id="selDatasetVolume" onchange="optionChangedVolume(this.value)">
+            <select id="selDatasetVolume" onchange="optionChangedVolume(this.value); optionProgramText(this.value)">
                 <option id="selected">All</option>
               </select>
             </div>
           </div> 
+
+          <div class="col-md-9">
+            <p id="programText">
+            Total volume is shown by default, but you can view volume by program type using the "Select Program Type" dropdown menu. 
+            </p>
+          </div> 
+
           </div>
 
           <div class="row" id='flow'>

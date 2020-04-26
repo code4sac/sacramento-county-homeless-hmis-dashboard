@@ -8,7 +8,7 @@ fetch(volume_url+"All").then( response => {
     return response.json();
 }).then(data => {
     // console.log('Full Data: ', data);
-    programs  = ['Permanent Housing', 'Emergency Shelter','Rapid Re-Housing','Street Outreach','Transitional Housing','Other']
+    programs  = ['Permanent Supportive Housing', 'Emergency Shelter','Rapid Re-Housing','Street Outreach','Transitional Housing','Other']
     programs.forEach(item => {
         d3.select('#selDatasetVolume').append("option").text(item).attr("value", item);
         d3.select('#selDatasetDemo').append("option").text(item).attr("value", item);
@@ -99,6 +99,10 @@ function buildOutcomes(outcomesData) {
             subtitle: {
                 text: 'For clients no longer enrolled in any programs, this chart shows\
                 the number and percent who had found permanent housing when their programs ended. Each client is only counted once.'
+            },
+            accessibility: {
+                description: 'Chart shows that both the number and percent of clients who found permanent housing peaked in early 2016\
+                 and have been lower since that time.'
             },
             exporting: {
                 buttons: {
@@ -338,7 +342,7 @@ var scaleDict = {
         'min':0,
         'max':21000
     },
-    "Permanent Housing":{
+    "Permanent Supportive Housing":{
         'min':0,
         'max':3000
     },
@@ -373,6 +377,15 @@ function buildYearlyBar(yearlyData, filterValue) {
         chart: {
             type: 'column'
         },
+        title: {
+            text: 'Program Participation by Year'
+        },
+        subtitle: {
+            text: 'This chart shows the total homeless services program enrollments each year and, of those, the number of new enrollments during the year and the number of enrollments that ended that year. Clients are included more than once if participating in more than one program.'
+        },
+        accessibility: {
+            description: 'Chart shows that active program participation has consistenly increased since 2015.'
+        },
         exporting: {
             buttons: {
                 contextButton: {
@@ -388,13 +401,6 @@ function buildYearlyBar(yearlyData, filterValue) {
                     ]
                 }
             }
-        },
-
-        title: {
-            text: 'Program Participation by Year'
-        },
-        subtitle: {
-            text: 'This chart shows the total homeless services program enrollments each year and, of those, the number of new enrollments during the year and the number of enrollments that ended that year. Clients are included more than once if participating in more than one program.'
         },
         colors: ["#434348", "#7cb5ec", "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
 
@@ -481,6 +487,15 @@ function buildYearlyDistinctBar(yearlyData, filterValue) {
         chart: {
             type: 'column'
         },
+        title: {
+            text: 'Distinct Count of Clients'
+        },
+        subtitle: {
+            text: 'This chart shows the total number of people who received homeless services by year and, of those, the number who started receiving services that year and the number who ended services that year. Each client is counted only once.'
+        },
+        accessibility: {
+            description: 'Chart shows that the number of distinct clients receiving services has consistenly increased since 2015.'
+        },
         exporting: {
             buttons: {
                 contextButton: {
@@ -498,12 +513,7 @@ function buildYearlyDistinctBar(yearlyData, filterValue) {
             }
         },
 
-        title: {
-            text: 'Distinct Count of Clients'
-        },
-        subtitle: {
-            text: 'This chart shows the total number of people who received homeless services by year and, of those, the number who started receiving services that year and the number who ended services that year. Each client is counted only once.'
-        },
+
         xAxis: {
             categories: [
                 
@@ -584,11 +594,23 @@ function buildYearlyDistinctBar(yearlyData, filterValue) {
 function updateDemo(demo,year, prog) {
 //Race 
     var racechartOptions = {
-        tooltip: { 
-            enabled: false 
-        },
+
         chart: {
             type: 'bar'
+        },
+        title: {
+            text: `Race`
+        },
+        subtitle: {
+            text: `Program Type: <b>${prog}</b> | Year: <b>${year}</b>`,
+            useHTML:true
+        },
+        accessibility: {
+            description: 'Chart shows that clients who identify themselves as white are the largest population,\
+             followed closely by black/african american.'
+        },
+        tooltip: { 
+            enabled: false 
         },
         plotOptions: {
             bar: {
@@ -614,10 +636,7 @@ function updateDemo(demo,year, prog) {
                 }
             }
         },
-        subtitle: {
-            text: `Program Type: <b>${prog}</b> | Year: <b>${year}</b>`,
-            useHTML:true
-        },
+
         xAxis: {
             categories: [
         ],
@@ -638,9 +657,6 @@ function updateDemo(demo,year, prog) {
         series: [{
             data: []
         }],
-        title: {
-            text: `Race`
-        }
     };
 
     var race = Object.entries(demo.race).sort((a,b) => a[1] - b[1]);
@@ -663,6 +679,10 @@ function updateDemo(demo,year, prog) {
         },
         title: {
             text: `Gender`
+        },
+        accessibility: {
+            description: 'Chart shows that clients who identify themselves as male are the largest population,\
+             followed closely by female.'
         },
         exporting: {
             buttons: {
@@ -748,6 +768,11 @@ ageOptions =  {
       text: `Program Type: <b>${prog}</b> | Year: <b>${year}</b>`,
       useHTML:true
     },
+    accessibility: {
+        description: 'Chart shows that there is a wide distribution of client ages with peaks at 24 and 49,\
+         and a continual decline in numbers after age 61. There are many children represented, with the bulk between 1 and 9, \
+         and then a general decline in numbers until age 19'
+    },
     xAxis: {
       categories: [
       ],
@@ -818,18 +843,54 @@ ageOptions =  {
 function optionChanged(value) {
     var selected = document.getElementById('selDatasetDemo');
     var demo = selected.options[selected.selectedIndex].value;
-    d3.json(demo_url+`${value}/`+`${demo}`, function(data) {
-        updateDemo(data, value, demo);
-    });
+    if (demo === "Permanent Supportive Housing") {
+        console.log('test');
+        d3.json(demo_url+`${value}/`+'Permanent%20Housing', function(data) {
+            updateDemo(data, value, demo);
+    })
+    }
+    else {
+        d3.json(demo_url+`${value}/`+`${demo}`, function(data) {
+            updateDemo(data, value, demo);
+    })};
 }
+
+// function to fill volume program with info about selected program type
+function optionProgramText(value) {
+    if (value === "Permanent Supportive Housing") {
+        programText.innerText = "Permanent Supportive Housing provides housing with indefinite leasing or rental assistance paired with supportive services to assist homeless persons with a disability.";
+      } else if (value === "Emergency Shelter") {
+        programText.innerText = "Emergency Shelter programs house clients for short periods of time and include day and overnight shelters.";
+    } else if (value === "Rapid Re-Housing") {
+        programText.innerText = "Rapid Re-Housing is a form of permanent housing that emphasizes housing search and relocation services and short- and medium-term rental assistance to move homeless persons and families as rapidly as possible into permanent housing.";
+    } else if (value === "Street Outreach") {
+        programText.innerText = "Street Outreach programs engage with people on the street who are experiencing homelessness and aim to reconnect people to their social networks and/or get them into supportive programs.";
+    } else if (value === "Transitional Housing") {
+        programText.innerText = "Transitional Housing programs are intended for clients that require additional help to get ready to live on their own and include wrap-around intensive services.";
+    } else if (value === "Other") {
+        programText.innerText = '"Other" is a combination of smaller categories of services recorded in the Homeless Management Information System.';
+    } else {
+        programText.innerText = "Total volume is shown by default, but you can view volume by program type using the dropdown menu."; 
+    }
+    }
+
 // function attached to event listener in html for the option chaanges for 
 // selecting Progam Type on Program Volume Row
 function optionChangedVolume(value) {
-    d3.json(volume_url+`${value}`, function(data) {
-        var volume_data = unpackVolume(data);
-        buildYearlyBar(volume_data, value);
-        buildYearlyDistinctBar(volume_data, value);
+    if (value === "Permanent Supportive Housing") {
+        d3.json(volume_url+'Permanent%20Housing', function(data) {
+            var volume_data = unpackVolume(data);
+            buildYearlyBar(volume_data, value);
+            buildYearlyDistinctBar(volume_data, value);
     });
+    }
+    else {
+        d3.json(volume_url+`${value}`, function(data) {
+            var volume_data = unpackVolume(data);
+            buildYearlyBar(volume_data, value);
+            buildYearlyDistinctBar(volume_data, value);
+    });
+    }
 }
 
 function optionChangedDemo(value) {
@@ -837,10 +898,17 @@ function optionChangedDemo(value) {
     var year = selected.options[selected.selectedIndex].value;
     if (year === 'Year') {
         year = '2018'
+    };
+    if (value === "Permanent Supportive Housing") {
+            d3.json(demo_url+`${year}/`+'Permanent%20Housing', function(data) {
+                updateDemo(data, year, value);
+    });
     }
+    else {
     d3.json(demo_url+`${year}/`+`${value}`, function(data) {
         updateDemo(data, year, value);
     });
+    }
 }
 
 
