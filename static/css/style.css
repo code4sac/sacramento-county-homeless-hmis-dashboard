@@ -194,6 +194,14 @@ padding: 0px;
   text-align: left;
 }
 
+#programText {
+  margin-top: 10px;
+  margin-bottom: 0em;
+  padding-left: 90px;
+  padding-right: 90px;
+  font-style: italic;
+}
+
 /* highcharts base colors for reference */
 .colortest {
   color: #2f7ed8, #0d233a, #8bbc21, #910000, #1aadce,
