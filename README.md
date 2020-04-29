@@ -26,10 +26,10 @@ This dashboard was developed to help the community visualize the volume of homel
 
 * Initial ETL, exploration, and database build was via a Python Jupyter Notebook.
 * Python app now used to clean and load data into database. 
-* Python modules used include sqlalchemy, numpy, and pandas.
+* Python modules used include SQLAlchemy, Numpy, and Pandas.
 * Development and production database is PostgreSQL.
 * A flask API serves the data from the database.
-* Web page design uses HTML5, CSS3, and Javascript, including Highcarts library.
+* Web page design uses HTML5, CSS3, and JavaScript, including Highcarts library.
 * Web page hosted on Heroku app. 
 
 ![bottom_dash](images/HMIS_dash_bottom.JPG)
