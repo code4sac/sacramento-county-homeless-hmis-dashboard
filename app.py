@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 
 
@@ -22,7 +22,6 @@ conn = psycopg2.connect(url, sslmode='require')
 
 @app.route('/')
 def home():
-    
     return render_template('index.html')
 
 #volume route
@@ -186,7 +185,7 @@ def get_source():
 # Demographic data
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
 
 
 
