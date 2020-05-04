@@ -117,6 +117,51 @@ CREATE TABLE Destinations(
 "Destination_Code" INT,
 "Exit_Destination" VARCHAR PRIMARY KEY
 );
+
+DROP TABLE IF EXISTS yearly_race;
+create table yearly_race
+(Date text,
+"Project_Type" varchar,
+"Race" varchar,
+num_people_enroll bigint);
+
+DROP TABLE IF EXISTS race_no_prog;
+
+create table race_no_prog
+(Date text,
+"Race" varchar,
+num_people_enroll bigint);
+    
+DROP TABLE IF EXISTS age_no_prog;
+
+create table age_no_prog
+("Date" text,
+"Age" int,
+"Num_Clients" bigint); 
+
+DROP TABLE IF EXISTS age_prog;
+
+create table age_prog
+("Date" text,
+"Project_Type" varchar,
+"Age" int,
+"Num_Clients" bigint);
+
+
+DROP TABLE IF EXISTS gender_no_prog;
+
+create table gender_no_prog
+(Date text,
+"Gender" varchar,
+num_people_enroll bigint);   
+
+DROP TABLE IF EXISTS yearly_gender;
+
+create table yearly_gender
+(Date text,
+"Project_Type" varchar,
+"Gender" varchar,
+num_people_enroll bigint);
     '''
     c.execute(sql)
 
@@ -285,7 +330,7 @@ set "Project_Type_Group" = 'Other' where "Project_Type" in ('Day Shelter',
 # an exit date before the end of the queried time period
 # Client Id may be represented more than once - each enrollment counted
 
-# dates = pd.date_range(start='1/01/2015',periods=12*5,freq='M')
+
 dates = ['2015','2016','2017','2018','2019']
 
 sql_create = '''
@@ -344,43 +389,6 @@ for date in dates:
             c.execute(sql_update.format(date))
             c.execute(sql_update_programs.format(date))
 
-
-# Table for number of active clients per year
-# Clients who were exclusively active (entered before year start, exited after)
-
-# dates_y = ['2015','2016','2017','2018','2019']
-
-# sql_create = '''
-# DROP TABLE IF EXISTS num_active_yearly CASCADE;
-# CREATE TABLE num_active_yearly (
-# Act_Date VARCHAR PRIMARY KEY,
-# Num_Act BIGINT,
-# Null_Act BIGINT
-# );
-# '''
-# with engine.connect() as c:
-#     c.execute(sql_create)
-    
-# sql_update = '''
-# INSERT INTO num_active_yearly VALUES
-# ('{0}',
-# (SELECT COUNT(a."Client_Id")
-# FROM enrollment a
-# LEFT JOIN exit_screen b
-# ON a."Enrollment_Id" = b."Enrollment_Id"
-# WHERE TO_CHAR(a."Added_Date",'YYYY') <= '{0}'
-# AND b."Exit_Date" > '{0}-01-01'),
-# (SELECT COUNT(a."Client_Id")
-# FROM enrollment a
-# LEFT JOIN exit_screen b
-# ON a."Enrollment_Id" = b."Enrollment_Id"
-# WHERE TO_CHAR(a."Added_Date",'YYYY') <= '{0}'
-# AND b."Exit_Date" is null));
-# '''
-
-# for date in dates_y:
-#     with engine.connect() as c:
-#         c.execute(sql_update.format(date))
 
 
 
@@ -495,35 +503,6 @@ on a."year" = c."Year";
 
 
 
-# # Create table for top 5 programs by enrollment by year
-# dates_y = ['2015','2016','2017','2018','2019']
-
-# sql_create = '''
-# DROP TABLE IF EXISTS top_5_programs CASCADE;
-# CREATE TABLE top_5_programs(
-# "Date" VARCHAR(5),
-# "Program" VARCHAR(100),
-# "Num_Enroll" BIGINT);
-# '''
-# with engine.connect() as c:
-#     c.execute(sql_create)
-    
-# sql_update = '''
-# INSERT INTO top_5_programs
-
-# SELECT TO_CHAR(e."Added_Date",'YYYY') "Date", p."Program_Name", COUNT(e."Enrollment_Id")"Num_Enroll"
-# FROM enrollment e
-# LEFT JOIN programs p
-# ON p."Program_Id" = e."Program_Id"
-# WHERE TO_CHAR(e."Added_Date",'YYYY') = '{0}'
-# GROUP BY TO_CHAR(e."Added_Date",'YYYY'), p."Program_Name" 
-# ORDER BY COUNT(e."Enrollment_Id") DESC LIMIT 5;
-# '''
-
-# for date in dates_y:
-#     with engine.connect() as c:
-#         c.execute(sql_update.format(date))
-
 
 # # Create demographic tables
 with engine.connect()as c:
@@ -535,119 +514,18 @@ WHERE "Race" IN ('Client Refused', 'Data Not Collected',
 OR"Race" IS NULL;
 
 
-DROP TABLE IF EXISTS yearly_race CASCADE;
-
-SELECT TO_CHAR(e."Added_Date",'YYYY') Date,
-p."Project_Type_Group" as "Project_Type",
-c."Race", 
-COUNT(distinct e."Client_Id") Num_People_Enroll
-into yearly_race
-FROM enrollment e
-LEFT JOIN clients c
-ON e."Client_Id" = c."Client_Id"
-left join programs p
-on e."Program_Id" = p."Program_Id"
-WHERE TO_CHAR(e."Added_Date",'YYYY') > '2014'
-GROUP BY TO_CHAR(e."Added_Date",'YYYY'), p."Project_Type_Group", c."Race"
-ORDER BY TO_CHAR(e."Added_Date",'YYYY'), p."Project_Type_Group",COUNT(e."Enrollment_Id");
-
 UPDATE clients
 SET "Gender" = 'Unknown'
 WHERE "Gender" IN ('Client doesn''t know', 'Client refused',
 'Data not collected')
 OR "Gender" IS NULL;
 
-DROP TABLE IF EXISTS yearly_gender CASCADE;
-
-SELECT TO_CHAR(e."Added_Date",'YYYY') Date,
-p."Project_Type_Group" as "Project_Type",
-c."Gender", 
-COUNT(distinct e."Client_Id") Num_People_Enroll
-into yearly_gender
-FROM enrollment e
-LEFT JOIN clients c
-ON e."Client_Id" = c."Client_Id"
-left join programs p
-on e."Program_Id" = p."Program_Id"
-WHERE TO_CHAR(e."Added_Date",'YYYY') > '2014'
-GROUP BY TO_CHAR(e."Added_Date",'YYYY'), p."Project_Type_Group", c."Gender"
-ORDER BY TO_CHAR(e."Added_Date",'YYYY'), p."Project_Type_Group", c."Gender";
 
 
 '''
     c.execute(sql)
 
 
-create_age = '''
-    drop table if exists age;
-    drop table if exists age_prog;
-    create table age_prog (
-        "Date" varchar,
-        "Project_Type" varchar,
-        "Age" int,
-        "Num_Clients" bigint
-    );
-    drop table if exists age_no_prog;
-    create table age_no_prog (
-        "Date" varchar,
-        "Age" int,
-        "Num_Clients" bigint
-    );
-'''
-
-with engine.connect() as c:
-    c.execute(create_age)
-
-years = ['2015','2016','2017','2018','2019']
-
-age_sql = '''
-insert into age_prog 
-  with t as (
-SELECT TO_CHAR(e."Added_Date",'YYYY') "Date",
-((e."Added_Date"::date - c."Birth_Date"::date)/365) "Age",
-p."Project_Type_Group" as "Project_Type"
-FROM enrollment e
-LEFT JOIN 
-clients c 
-ON e."Client_Id" = c."Client_Id"
-left join programs p
-on e."Program_Id" = p."Program_Id"
-WHERE TO_CHAR(e."Added_Date",'YYYY') > '2014'
-and c."Birth_Date" is not null
-ORDER BY "Date", "Project_Type", "Age"
-	)
-	select "Date", "Project_Type", "Age", count(*) from t
-	where "Date" = '{}'
-	and "Age" < 100
-	group by "Age","Date", "Project_Type"
-	order by "Date", "Project_Type";
-
-'''
-
-age_sql_no_prog = '''
-insert into age_no_prog
-  with t as (
-SELECT TO_CHAR(e."Added_Date",'YYYY') "Date",
-((e."Added_Date"::date - c."Birth_Date"::date)/365) "Age"
-FROM enrollment e
-LEFT JOIN 
-clients c 
-ON e."Client_Id" = c."Client_Id"
-WHERE TO_CHAR(e."Added_Date",'YYYY') > '2014'
-and c."Birth_Date" is not null
-ORDER BY "Date", "Age"
-	)
-	select "Date", "Age", count(*) from t
-	where "Date" = '{}'
-	and "Age" < 100
-	group by "Age","Date"
-	order by "Date", "Age"
-'''
-
-with engine.connect() as c:
-    for year in years:
-        c.execute(age_sql.format(year))
-        c.execute(age_sql_no_prog.format(year))
 
 
 
@@ -842,29 +720,6 @@ FROM num_to_ph;
 
 with engine.connect() as c:
     sql= '''
-
-DROP TABLE IF EXISTS race_no_prog CASCADE;
-SELECT TO_CHAR(e."Added_Date",'YYYY') Date, c."Race", COUNT(distinct e."Client_Id") Num_People_Enroll
-into race_no_prog
-FROM enrollment e
-LEFT JOIN clients c
-ON e."Client_Id" = c."Client_Id"
-WHERE TO_CHAR(e."Added_Date",'YYYY') > '2014'
-GROUP BY TO_CHAR(e."Added_Date",'YYYY'), c."Race"
-ORDER BY TO_CHAR(e."Added_Date",'YYYY'), COUNT(e."Enrollment_Id");
-
-
-DROP TABLE IF EXISTS gender_no_prog CASCADE;
-SELECT TO_CHAR(e."Added_Date",'YYYY') Date, c."Gender", COUNT(distinct e."Client_Id") Num_People_Enroll
-into gender_no_prog
-FROM enrollment e
-LEFT JOIN clients c
-ON e."Client_Id" = c."Client_Id"
-WHERE TO_CHAR(e."Added_Date",'YYYY') > '2014'
-GROUP BY TO_CHAR(e."Added_Date",'YYYY'), c."Gender"
-ORDER BY TO_CHAR(e."Added_Date",'YYYY'), COUNT(distinct e."Client_Id");
-
-
 DROP TABLE if exists monthly_flow;
 DROP TABLE if exists outcomes_sum_monthly; 
 SELECT 
@@ -886,9 +741,6 @@ INTO outcomes_sum_yearly
 FROM avg_to_ph E 
 FULL JOIN percent_ph_yr F ON F."Date"= E."Date"
 order by "Date";
-
-DROP TABLE if exists demographics;
-
 
 DELETE FROM outcomes_sum_monthly
 where "Num_out" is null;
@@ -932,3 +784,151 @@ where "Num_out" is null;
 # # Drop created columns needed for making predictions for last months of 2019 
 # monthly.drop(columns=['date', 'month'], inplace=True)
 # monthly.to_sql(name='monthly_flow', con=con, if_exists='replace', index=False)
+
+
+# from sqlalchemy import text
+from sqlalchemy.orm.session import sessionmaker
+
+Session = sessionmaker()
+sess = Session(bind=con)
+sql = '''
+DO $$
+DECLARE
+	rec RECORD;
+BEGIN
+	FOR rec IN 
+		(SELECT DISTINCT to_char("Added_Date", 'YYYY') as yearvar FROM enrollment
+		WHERE to_char("Added_Date", 'YYYY') > '2014')
+		LOOP 
+			INSERT INTO yearly_race
+			SELECT rec.yearvar::text as Date,
+			p."Project_Type_Group" as "Project_Type",
+			c."Race", 
+			COUNT(distinct e."Client_Id") Num_People_Enroll
+			FROM enrollment e
+			LEFT JOIN clients c
+			ON e."Client_Id" = c."Client_Id"
+			left join programs p
+			on e."Program_Id" = p."Program_Id"
+			left join exit_screen ex on ex."Enrollment_Id" = e."Enrollment_Id"
+			WHERE e."Added_Date" <> '2014-01-01'
+			AND TO_CHAR(e."Added_Date", 'YYYY') <= rec.yearvar::text
+			and (ex."Exit_Date" > cast((rec.yearvar::text || '-01-01') as date)
+				OR ex."Exit_Date" IS NULL)
+			GROUP BY date, p."Project_Type_Group", c."Race"
+			ORDER BY date, p."Project_Type_Group";
+
+			INSERT INTO race_no_prog
+			SELECT rec.yearvar::text as Date,
+			c."Race", 
+			COUNT(distinct e."Client_Id") Num_People_Enroll
+			FROM enrollment e
+			LEFT JOIN clients c
+			ON e."Client_Id" = c."Client_Id"
+			left join exit_screen ex on ex."Enrollment_Id" = e."Enrollment_Id"
+			WHERE e."Added_Date" <> '2014-01-01'
+			AND TO_CHAR(e."Added_Date", 'YYYY') <= rec.yearvar::text
+			and (ex."Exit_Date" > cast((rec.yearvar::text || '-01-01') as date)
+				OR ex."Exit_Date" IS NULL)
+			GROUP BY date, c."Race"
+			ORDER BY date,c."Race";
+			
+			INSERT INTO gender_no_prog
+			SELECT rec.yearvar::text as Date, 
+			c."Gender", 
+			COUNT(distinct e."Client_Id") Num_People_Enroll
+			FROM enrollment e
+			LEFT JOIN clients c
+			ON e."Client_Id" = c."Client_Id"
+			left join exit_screen ex
+			on e."Enrollment_Id" = ex."Enrollment_Id"
+			WHERE e."Added_Date" <> '2014-01-01'
+			AND TO_CHAR(e."Added_Date", 'YYYY') <= rec.yearvar::text
+			and (ex."Exit_Date" > cast((rec.yearvar::text || '-01-01') as date)
+				OR ex."Exit_Date" IS NULL)
+			GROUP BY date, c."Gender"
+			ORDER BY date, 
+			c."Gender";
+			
+			insert into yearly_gender
+			SELECT rec.yearvar::text as Date,
+			p."Project_Type_Group" as "Project_Type",
+			c."Gender", 
+			COUNT(distinct e."Client_Id") Num_People_Enroll
+			FROM enrollment e
+			LEFT JOIN clients c
+			ON e."Client_Id" = c."Client_Id"
+			left join programs p
+			on e."Program_Id" = p."Program_Id"
+			left join exit_screen ex
+			on e."Enrollment_Id" = ex."Enrollment_Id"
+			WHERE e."Added_Date" <> '2014-01-01'
+			AND TO_CHAR(e."Added_Date", 'YYYY') <= rec.yearvar::text
+			and (ex."Exit_Date" > cast((rec.yearvar::text || '-01-01') as date)
+				OR ex."Exit_Date" IS NULL)
+			GROUP BY date, p."Project_Type_Group", c."Gender"
+			ORDER BY date, p."Project_Type_Group", c."Gender";
+			
+			insert into age_prog
+			 (with t as (
+				SELECT rec.yearvar::text as "Date",
+				(to_char(MAX(e."Added_Date") OVER(
+							PARTITION BY e."Client_Id"
+									),
+		 'YYYY')::int - to_char(c."Birth_Date",'YYYY')::int)  "Age",
+				 p."Project_Type_Group" as "Project_Type",
+				 e."Client_Id"
+				FROM enrollment e
+				LEFT JOIN 
+				clients c 
+				ON e."Client_Id" = c."Client_Id"
+				left join programs p
+				on e."Program_Id" = p."Program_Id"
+				left join exit_screen ex on ex."Enrollment_Id" = e."Enrollment_Id"
+				WHERE e."Added_Date" <> '2014-01-01'
+				AND TO_CHAR(e."Added_Date", 'YYYY') <= rec.yearvar::text
+				and (ex."Exit_Date" > cast((rec.yearvar::text || '-01-01') as date) 
+					 or ex."Exit_Date" is null)
+				and c."Birth_Date" is not null
+				ORDER BY "Date", "Project_Type", "Age"
+				)
+			select rec.yearvar::text as "Date", "Project_Type", 
+			  "Age", count(distinct "Client_Id") as "Num_Clients" 
+			  from t
+			Where "Age" < 100
+			group by "Date", "Project_Type", "Age"
+			order by "Date", "Project_Type");
+			
+			insert into age_no_prog
+			 (with t as (
+				SELECT rec.yearvar::text as "Date",
+				(to_char(MAX(e."Added_Date") OVER(
+							PARTITION BY e."Client_Id"
+									),
+		 'YYYY')::int - to_char(c."Birth_Date",'YYYY')::int)  "Age",
+				 c."Client_Id"
+				FROM enrollment e
+				LEFT JOIN 
+				clients c 
+				ON e."Client_Id" = c."Client_Id"
+				left join exit_screen ex on ex."Enrollment_Id" = e."Enrollment_Id"
+				WHERE e."Added_Date" <> '2014-01-01'
+				AND TO_CHAR(e."Added_Date", 'YYYY') <= rec.yearvar::text
+				and (ex."Exit_Date" > cast((rec.yearvar::text || '-01-01') as date) 
+					 or ex."Exit_Date" is null)
+				and c."Birth_Date" is not null
+				ORDER BY "Date", "Age"
+				)
+			select rec.yearvar::text as "Date", 
+			  "Age", count(distinct "Client_Id") as "Num_Clients" 
+			  from t
+			where "Age" < 100
+			group by "Date","Age"
+			order by "Date","Age");
+		END LOOP;
+END;$$ LANGUAGE 'plpgsql';
+
+'''
+
+sess.execute(sql)
+sess.commit()
