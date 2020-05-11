@@ -36,13 +36,13 @@ This dashboard was developed to help the community visualize the volume of homel
 
 ## Assumptions Used for Producing Charts
 
-#### Data included for those receiing homeless services clients from January 1, 2015 through August 31, 2019
+#### Data included for those receiving homeless services from January 1, 2015 through August 31, 2019
 
 - While there is some data in the dataset after August 2019, it appears to be incomplete and is not included.
 
 #### Volume/Program Participation
 
-- Total distinct clients and total programs enrollments include those enrolled in a program who do not have an exit date prior to the end of the time period, plus those with an exit date during the time period.
+- Total distinct clients and total program enrollments differ because of clients enrolling in multiple programs during a given time period.  Distinct clients are meant to represent how many individuals receive services per year, and total program enrollment is meant to capture the overall load on the homeless services system.  Total clients/ enrollments count clients who enrolled a program either during or before the given year and exited any time during or after the given year.  For example, both a client who enrolled on January 1st, 2016 and exited in February 1st, 2016, and a client who enrolled in July 1st, 2015 and exited July 1st, 2017 would be counted in "Total Clients/Enrollments" for 2016; however, the latter client would be counted as active in 2015, 2016 and 2017.  
 - New clients/enrollments and clients/enrollments ended are straightforward counts of activity within the time period.
 
 #### Outcomes/Program enrollees with permanent housing upon program exit
@@ -57,6 +57,7 @@ This dashboard was developed to help the community visualize the volume of homel
 #### Demographics
 
 - Unknown categories are grouped together. For example, in Race chart, unknown includes categories ‘Client Refused', 'Data Not Collected', 'Client doesn't Know', and ‘NULL’.
+- Counts show the total number of distinct clients per year, using the same method as described in Volume/ Program Participation above.   
 
 ## Execution Instructions for Local Development
 
